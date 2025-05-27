@@ -67,3 +67,12 @@ $ npm install --save-dev eslint @eslint/js globals
 
 $ npx eslint --init
 Follow defaults
+
+See scripts in package.json
+$ npm run
+
+Create package.json scripts
+
+Make them $ npm run (name_command)
+
+Create a launch.json file with Debug Extension\
