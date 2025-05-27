@@ -1,0 +1,16 @@
+{
+  "name": "rivers-simple-frontend",
+  "version": "1.0.0",
+  "description": "Simple HTML, CSS, TypeScript for rivers website https://rivers.johnblakey.org/",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}
