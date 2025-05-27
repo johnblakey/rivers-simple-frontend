@@ -2,6 +2,10 @@
 
 Simple HTML, CSS, TypeScript for rivers website <https://rivers.johnblakey.org/>
 
+## TODO
+
+- Create production version that is minified
+
 ## Setup TypeScript Project
 
 Summary: plan to use the MDN recommended toolchain and coding style for beginners
@@ -73,6 +77,18 @@ $ npm run
 
 Create package.json scripts
 
-Make them $ npm run (name_command)
+Run scripts
+$ npm run (name_command)
 
-Create a launch.json file with Debug Extension\
+Created a launch.json file that enables Debugging Extension of TypeScript
+
+Install Lit
+$ npm install lit
+
+## Vite
+
+See commands
+h + Enter
+
+Quit Server
+q + Enter
