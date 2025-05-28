@@ -1,12 +1,12 @@
 {
   "name": "rivers-simple-frontend",
+  "private": true,
   "version": "1.0.0",
   "description": "Simple HTML, CSS, TypeScript for rivers website https://rivers.johnblakey.org/",
-  "main": "index.js",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run lint && vite build",
+    "build": "npm run lint && tsc && vite build",
     "preview": "vite preview",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
