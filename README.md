@@ -46,6 +46,8 @@ Final package.json
 
 $ npm install --save-dev vite
 
+Create configs for Vite with tsconfig.json and package.json <https://github.com/vitejs/vite/tree/main/packages/create-vite/template-lit>
+
 $ npx vite
 Run the server, similar to Live Server (VS Code extension))
 
@@ -86,6 +88,8 @@ Install Lit
 $ npm install lit
 
 ## Vite
+
+<https://vite.dev/guide/>
 
 See commands
 h + Enter
