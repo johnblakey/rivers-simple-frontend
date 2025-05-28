@@ -6,6 +6,15 @@ Simple HTML, CSS, TypeScript for rivers website <https://rivers.johnblakey.org/>
 
 - Create production version that is minified
 
+## Local Testing
+
+- Login for Cloud Code repo with river-level-0 | use VS Code menu to authenticate then choose the project name
+- $ gcloud auth login
+- Adjust to river-level-0 project
+- Login to Google Cloud CLI Application Default Credentials (ADC) to enable Datastore connection
+- $ gcloud auth login --update-adc
+- Use existing launch.json to run the application locally | VS Code > Run and Debug > next.js debug full stack
+
 ## Setup TypeScript Project
 
 Summary: plan to use the MDN recommended toolchain and coding style for beginners
@@ -26,23 +35,6 @@ Followed questions to create package.json
 Added
 "type": "module",
 "private": true,
-
-Final package.json
-
-{
-"name": "simple-website-tooling-test",
-"type": "module",
-"private": true,
-"version": "0.1.0",
-"description": "JavaScript, HTML, CSS and other tools in VS Code test.",
-"main": "main.js",
-"scripts": {
-"test": "echo \"Error: no test specified\" && exit 1",
-"dev": "npx vite"
-},
-"author": "JB",
-"license": "ISC"
-}
 
 $ npm install --save-dev vite
 

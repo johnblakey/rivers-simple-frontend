@@ -11,6 +11,20 @@
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}",
       "sourceMaps": true
-    }
+    },
+    {
+        "type": "chrome",
+        "request": "launch",
+        "name": "Debug with envs in Chrome",
+        "url": "http://localhost:5173",
+        "webRoot": "${workspaceFolder}",
+        "sourceMaps": true,
+        "env": {
+            "PROJECT_ID": "river-level-0",
+            "WATER_LEVEL_KIND": "riverTimeSeriesData",
+            "RIVER_DETAILS_KIND": "riverDetails",
+            "DATASTORE_NAMESPACE": "firestore"
+        }
+    },
   ]
 }
