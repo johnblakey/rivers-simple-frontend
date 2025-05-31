@@ -26,6 +26,7 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "@google-cloud/datastore": "^10.0.1",
     "lit": "^3.3.0"
   }
 }

@@ -63,6 +63,8 @@ TODO - enable override of setup above in npm
 
 $ npm install --save-dev eslint @eslint/js globals
 
+$ npm install @google-cloud/datastore
+
 $ npx eslint --init
 Follow defaults
 
