@@ -63,7 +63,9 @@ TODO - enable override of setup above in npm
 
 $ npm install --save-dev eslint @eslint/js globals
 
-$ npm install @google-cloud/datastore
+$ npm install chartjs-adapter-date-fns date-fns
+$ npm install chart.js
+
 
 $ npx eslint --init
 Follow defaults
