@@ -28,6 +28,9 @@ export class RiverLevelChart extends LitElement {
       max-width: 100%;
       height: auto;
     }
+    canvas.hidden {
+      display: none;
+    }
     .loading, .error {
       padding: 20px;
       text-align: center;
@@ -172,14 +175,20 @@ export class RiverLevelChart extends LitElement {
 
   render() {
     if (this._isLoading) {
-      return html`<div class="loading">Loading chart data for ${this.chartTitle}...</div>`;
+      // Keep rendering the basic structure even when loading, but hide the canvas
+      // and show a loading message.
     }
     if (this._error) {
       return html`<div class="error">Error loading chart for ${this.chartTitle}: ${this._error}</div>`;
     }
+
+    // Always render the canvas structure.
+    // Show loading message if applicable.
+    // Hide canvas via CSS if loading.
     return html`
       <h2>${this.chartTitle}</h2>
-      <canvas id="riverChartCanvas"></canvas>
+      ${this._isLoading ? html`<div class="loading">Loading chart data for ${this.chartTitle}...</div>` : ''}
+      <canvas id="riverChartCanvas" class=${this._isLoading ? 'hidden' : ''}></canvas>
     `;
   }
 }
