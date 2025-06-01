@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { Chart, registerables, type ChartConfiguration, type ChartData } from 'chart.js/auto';
 import AnnotationPlugin, { type AnnotationOptions } from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 
 import {
   getRiverLevelsBySiteName,
@@ -334,7 +335,9 @@ export class RiverLevelChart extends LitElement {
               Low: ${this.riverDetail.lowAdvisedCFS ?? 'N/A'} -
               High: ${this.riverDetail.highAdvisedCFS ?? 'N/A'}
             </p>
-            ${this.riverDetail.comments ? html`<p><strong>Comments:</strong> ${this.riverDetail.comments}</p>` : ''}
+            ${this.riverDetail.comments ? html`
+              <p><strong>Comments:</strong> ${unsafeHTML(linkify(this.riverDetail.comments))}</p>
+            ` : ''}
             ${this.riverDetail.gaugeSource ? html`
               <p>
                 <strong>Gauge Source:</strong>
@@ -440,4 +443,10 @@ function getCurrentLevelLabelColor(value: number, low: number | undefined, high:
   if (typeof low === 'number' && typeof high !== 'number' && value >= low) return LABEL_COLORS.green;
   if (typeof high === 'number' && typeof low !== 'number' && value <= high) return LABEL_COLORS.green;
   return LABEL_COLORS.default;
+}
+
+function linkify(text: string): string {
+  // Matches http(s) URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
 }
