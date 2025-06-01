@@ -110,6 +110,7 @@ TODO - add steps from backend
 
 ## TODO
 
+- Bug fix: fix Lit graph x-axis formatting issue - only shows time
 - Create tailwind css
 - Add Terms of Use page, create a separate page
 
