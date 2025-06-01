@@ -20,6 +20,7 @@ export interface RiverDetail {
   lowAdvisedCFS: number;
   siteCode: string; // Can be an empty string
   siteName: string;
+  gaugeName: string; // The name to be used for querying the riverlevels endpoint
 }
 
 const BASE_API_URL = "https://api.rivers.johnblakey.org";
@@ -64,18 +65,3 @@ export async function getRiverLevelsBySiteName(siteName: string): Promise<RiverL
   const url = `${BASE_API_URL}/riverlevels/sitename/${encodedSiteName}`;
   return fetchJSON<RiverLevel[]>(url);
 }
-
-/**
- * Formats a date-time string, number, or Date object into MM-DD-YYYY HH:MM format.
- * @param dateTime The date-time to format.
- * @returns The formatted date-time string.
- */
-export const formatDate = (dateTime: string | number | Date): string => {
-  const date = new Date(dateTime);
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
-  const year = date.getFullYear();
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  return `${month}-${day}-${year} ${hours}:${minutes}`;
-};

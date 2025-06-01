@@ -1,7 +1,7 @@
-import { LitElement, html, css, type PropertyValueMap } from 'lit';
+import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { Chart, registerables, type ChartConfiguration, type ChartData } from 'chart.js/auto';
-import 'chartjs-adapter-date-fns'; // Import the date adapter
+import 'chartjs-adapter-date-fns';
 
 import {
   getRiverDetails,
@@ -15,33 +15,8 @@ Chart.register(...registerables);
 
 @customElement('river-level-chart')
 export class RiverLevelChart extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-      margin: 16px;
-      padding: 16px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      max-width: 800px;
-    }
-    canvas {
-      max-width: 100%;
-      height: auto;
-    }
-    canvas.hidden {
-      display: none;
-    }
-    .loading, .error {
-      padding: 20px;
-      text-align: center;
-    }
-  `;
-
   @property({ type: String })
   siteNameToQuery: string = '';
-
-  @property({ type: String })
-  chartTitle: string = 'River Levels';
 
   @state()
   private _levels: RiverLevel[] = [];
@@ -53,44 +28,80 @@ export class RiverLevelChart extends LitElement {
   private _error: string | null = null;
 
   @state()
-  private _isFetchingOrRendering: boolean = false;
+  private _hasData: boolean = false; // Initialize to false, set to true when data is loaded
 
   private chartInstance: Chart | null = null;
-  private canvasRef: HTMLCanvasElement | null = null;
 
-  protected firstUpdated(_: PropertyValueMap<this> | Map<PropertyKey, unknown>): void {
-      // This line "uses" the variable '_' to satisfy the ESLint rule
-      // when the `argsIgnorePattern` for `no-unused-vars` is not configured
-      // to ignore parameters named or prefixed with an underscore.
-      // The ideal solution is to configure ESLint (e.g., "argsIgnorePattern": "^_").
-      void _;
+  @property({ type: Object })
+  riverDetail: RiverDetail | null = null;
 
-      this.canvasRef = this.shadowRoot?.querySelector('#riverChartCanvas') as HTMLCanvasElement;
-      if (this.siteNameToQuery) {
-        this.fetchAndRenderChart();
-      }
-  }
+  // _isFetchingOrRendering is now part of fetchData logic, not a separate state for render logic
+  private _isFetchingOperationInProgress: boolean = false;
 
   protected updated(changedProperties: Map<string | number | symbol, unknown>): void {
-    if (changedProperties.has('siteNameToQuery') && this.siteNameToQuery) {
-      this.fetchAndRenderChart();
+    let needsDataFetch = false;
+    if (changedProperties.has('siteNameToQuery')) {
+      needsDataFetch = true;
+    }
+    if (changedProperties.has('riverDetail')) {
+      // If riverDetail changed, it might imply siteNameToQuery should also be updated if derived,
+      // or at least titles might need refresh. Fetching data ensures consistency.
+      needsDataFetch = true;
+    }
+
+    if (needsDataFetch) {
+      if (this.siteNameToQuery && this.riverDetail) {
+        this.fetchData();
+      } else {
+        // siteNameToQuery or riverDetail is missing, clear chart and data
+        this.clearChartAndData();
+      }
+    }
+
+    // After states (_isLoading, _error, _hasData) are settled and component has re-rendered:
+    if (!this._isLoading && !this._error && this._hasData && !this.chartInstance) {
+      const canvas = this.shadowRoot?.querySelector('#riverChartCanvas') as HTMLCanvasElement | null;
+      if (canvas) {
+        this.renderChart(canvas);
+      } else {
+        console.warn('RiverLevelChart: Canvas element not found when trying to render chart, though data is present.');
+      }
     }
   }
 
-  async fetchAndRenderChart() {
-    if (!this.siteNameToQuery || !this.canvasRef) {
-      // console.debug('Skipping fetchAndRenderChart: no siteNameToQuery or canvasRef');
+  private clearChartAndData() {
+    if (this.chartInstance) {
+      this.chartInstance.destroy();
+      this.chartInstance = null;
+    }
+    this._levels = [];
+    this._hasData = false;
+    this._error = null;
+    this._isLoading = false; // Ensure loading state is reset
+    // State changes will trigger re-render
+  }
+
+  async fetchData() {
+    if (!this.siteNameToQuery) {
+      console.debug(`Skipping fetchData for ${this.riverDetail?.siteName || 'Unknown Site'}: no siteNameToQuery provided.`);
+      this.clearChartAndData();
+      return;
+    }
+    if (!this.riverDetail) {
+      console.debug(`Skipping fetchData for site ${this.siteNameToQuery}: no riverDetail provided.`);
+      this.clearChartAndData();
       return;
     }
 
-    if (this._isFetchingOrRendering) {
-      console.warn(`fetchAndRenderChart skipped for ${this.siteNameToQuery}: operation already in progress.`);
+    if (this._isFetchingOperationInProgress) {
+      console.warn(`fetchData skipped for ${this.siteNameToQuery}: operation already in progress.`);
       return;
     }
 
-    this._isFetchingOrRendering = true;
+    this._isFetchingOperationInProgress = true;
     this._isLoading = true;
     this._error = null;
+    this._hasData = false; // Reset hasData before fetching
 
     if (this.chartInstance) {
       this.chartInstance.destroy();
@@ -100,15 +111,29 @@ export class RiverLevelChart extends LitElement {
     try {
       const levels = await getRiverLevelsBySiteName(this.siteNameToQuery);
 
-      // Ensure component is still connected and canvas is available after await
-      if (!this.isConnected || !this.canvasRef) {
-        // console.debug(`Component disconnected or canvasRef lost for ${this.siteNameToQuery} after await. Aborting render.`);
-        return; // finally block will still run to reset flags
+      if (!this.isConnected) {
+        console.debug(`Component disconnected for ${this.siteNameToQuery} after await. Aborting.`);
+        this._isFetchingOperationInProgress = false; // Release lock
+        return;
       }
+
       // API returns newest first, reverse for chronological chart
       this._levels = levels.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      this._hasData = this._levels.length > 0;
 
-      const chartData: ChartData = {
+    } catch (err) {
+      this._error = err instanceof Error ? err.message : "Failed to load river levels.";
+      console.error(`Error fetching data for ${this.siteNameToQuery}:`, err);
+      this._hasData = false;
+    } finally {
+      this._isLoading = false;
+      this._isFetchingOperationInProgress = false;
+      // State changes (_isLoading, _error, _hasData) will trigger `updated` and re-render.
+    }
+  }
+
+  private renderChart(canvas: HTMLCanvasElement) {
+    const chartData: ChartData = {
         labels: this._levels.map(level => new Date(level.timestamp)),
         datasets: [{
           label: `Flow (${this._levels.length > 0 ? this._levels[0].unitCode : 'ft3/s'})`,
@@ -119,6 +144,12 @@ export class RiverLevelChart extends LitElement {
         }],
       };
 
+    const displayName = this.riverDetail?.siteName || 'River Levels';
+
+    // Ensure any previous instance on this canvas is destroyed (should be handled by fetchData, but good practice)
+    if (this.chartInstance) {
+        this.chartInstance.destroy();
+    }
       const config: ChartConfiguration = {
         type: 'line',
         data: chartData,
@@ -143,26 +174,19 @@ export class RiverLevelChart extends LitElement {
             y: {
               title: {
                 display: true,
-                text: `Level (${this._levels.length > 0 ? this._levels[0].unitCode : 'ft3/s'})`
+                text: `Level (${this._levels[0]?.unitCode || 'N/A'})` // Safe access
               }
             }
           },
           plugins: {
             title: {
                 display: true,
-                text: this.chartTitle
+                text: displayName
             }
           }
         }
       };
-      this.chartInstance = new Chart(this.canvasRef, config);
-    } catch (err) {
-      this._error = err instanceof Error ? err.message : "Failed to load river levels.";
-      console.error("Error fetching or rendering chart:", err);
-    } finally {
-      this._isLoading = false;
-      this._isFetchingOrRendering = false;
-    }
+    this.chartInstance = new Chart(canvas, config);
   }
 
   disconnectedCallback(): void {
@@ -174,23 +198,95 @@ export class RiverLevelChart extends LitElement {
   }
 
   render() {
-    if (this._isLoading) {
-      // Keep rendering the basic structure even when loading, but hide the canvas
-      // and show a loading message.
-    }
-    if (this._error) {
-      return html`<div class="error">Error loading chart for ${this.chartTitle}: ${this._error}</div>`;
-    }
+    const displayName = this.riverDetail?.siteName || this.siteNameToQuery || 'Loading River Data...';
 
-    // Always render the canvas structure.
-    // Show loading message if applicable.
-    // Hide canvas via CSS if loading.
     return html`
-      <h2>${this.chartTitle}</h2>
-      ${this._isLoading ? html`<div class="loading">Loading chart data for ${this.chartTitle}...</div>` : ''}
-      <canvas id="riverChartCanvas" class=${this._isLoading ? 'hidden' : ''}></canvas>
+      <div class="river-info-container">
+        <h2>${displayName}</h2>
+        ${this.riverDetail ? html`
+          <div class="details">
+            <p>
+              <strong>Site Code:</strong> ${this.riverDetail.siteCode || 'N/A'}
+            </p>
+            ${this.riverDetail.americanWhitewaterLink ? html`
+              <p>
+                <a href="${this.riverDetail.americanWhitewaterLink}" target="_blank" rel="noopener noreferrer">
+                  American Whitewater Details
+                </a>
+              </p>
+            ` : ''}
+            <p>
+              <strong>Advised Flow (CFS):</strong>
+              Low: ${this.riverDetail.lowAdvisedCFS ?? 'N/A'} -
+              High: ${this.riverDetail.highAdvisedCFS ?? 'N/A'}
+            </p>
+            ${this.riverDetail.comments ? html`<p><strong>Comments:</strong> ${this.riverDetail.comments}</p>` : ''}
+            ${this.riverDetail.gaugeSource ? html`
+              <p>
+                <strong>Gauge Source:</strong>
+                <a href="${this.riverDetail.gaugeSource}" target="_blank" rel="noopener noreferrer">Link</a>
+              </p>
+            ` : ''}
+            ${this.riverDetail.localWeatherNOAA ? html`
+              <p>
+                <strong>NOAA Weather:</strong>
+                <a href="${this.riverDetail.localWeatherNOAA}" target="_blank" rel="noopener noreferrer">Link</a>
+              </p>
+            ` : ''}
+          </div>
+        ` : html`<p>River details not available.</p>`}
+
+        <div class="chart-status-container">
+          ${this._isLoading
+            ? html`<div class="loading">Loading level data for ${displayName}...</div>`
+            : this._error
+            ? html`<div class="error">Error loading level data: ${this._error}</div>`
+            : this._hasData
+            ? html`<canvas id="riverChartCanvas"></canvas>`
+            : html`<div class="no-data">No current level data available for ${displayName}. River details above may still be relevant.</div>`
+          }
+        </div>
+      </div>
     `;
   }
+
+  static styles = css`
+    :host {
+      display: block;
+      margin: 16px;
+      padding: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      max-width: 800px;
+    }
+    .river-info-container h2 {
+      margin-top: 0;
+    }
+    .details {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #eee;
+    }
+    .details p {
+      margin: 4px 0;
+      font-size: 0.9em;
+    }
+    .details strong {
+      color: #333;
+    }
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+    .loading, .error, .no-data {
+      padding: 20px;
+      text-align: center;
+    }
+    .no-data {
+      color: #757575;
+      font-style: italic;
+    }
+  `;
 }
 
 async function initializeApp() {
@@ -198,56 +294,32 @@ async function initializeApp() {
 
   try {
     const riverDetails = await getRiverDetails();
-
-    // For demonstration, let's try to find "Sauk River near Sauk, Wa" (siteCode 12189500)
-    // The API endpoint /riverlevels/sitename/ expects a name like "SAUK RIVER NEAR SAUK, WA"
-    // which is the `siteName` from the `riverlevels` data.
-    // The `RiverDetail` object for siteCode 12189500 has `siteName: "Sauk River near Sauk, Wa"`.
-    // We'll use this and rely on the API being somewhat flexible or matching it.
-    // A more robust solution might involve matching siteCodes if siteNames are inconsistent.
-    const targetSiteDetail: RiverDetail | undefined = riverDetails.find(
-      // Using a known siteName from the riverlevels data for reliability with the API endpoint.
-      // This name corresponds to siteCode "12106700"
-      // The RiverDetail for 12106700 is "Green River - Upper Gorge"
-      // Let's use the siteName from the API example in data.txt for the query
-      // and find the corresponding detail for the title.
-      detail => detail.siteCode === "12106700" // Green River
-    );
-
-    const siteNameToQueryApi = "GREEN RIVER AT PURIFICATION PLANT NEAR PALMER, WA"; // From data.txt example
-    let chartTitle = siteNameToQueryApi;
-
-    if (targetSiteDetail) {
-        chartTitle = targetSiteDetail.siteName; // Use the more descriptive name from details for the title
-    } else {
-        console.warn(`Could not find a specific RiverDetail for siteCode 12106700, using default title.`);
-        // Fallback if the specific detail isn't found, still try to chart the example site
+    if (!riverDetails || riverDetails.length === 0) {
+      document.body.textContent = 'No river details found.';
+      return;
     }
 
-    if (siteNameToQueryApi) {
-      const chartElement = document.createElement('river-level-chart') as RiverLevelChart;
-      chartElement.siteNameToQuery = siteNameToQueryApi;
-      chartElement.chartTitle = chartTitle;
-      document.body.appendChild(chartElement);
+    const chartsContainer = document.createElement('div');
+    // Optional: Add a class for styling the container if needed
+    // chartsContainer.className = 'charts-container';
+    document.body.appendChild(chartsContainer);
 
-      // Example: Add another chart for a different river
-      const saukRiverDetail = riverDetails.find(d => d.siteCode === "12189500"); // Sauk River
-      // The riverlevels data for siteCode 12189500 has siteName: "SAUK RIVER NEAR SAUK, WA"
-      const saukSiteNameToQueryApi = "SAUK RIVER NEAR SAUK, WA";
-      let saukChartTitle = saukSiteNameToQueryApi;
-      if (saukRiverDetail) {
-        saukChartTitle = saukRiverDetail.siteName;
-      } else {
-        console.warn(`Could not find RiverDetail for Sauk River (12189500).`);
+    for (const detail of riverDetails) {
+      // Ensure siteName exists and is not empty, as it's used for querying and display
+      // AND gaugeName exists for querying the levels API.
+      if (!detail.gaugeName || detail.gaugeName.trim() === '') {
+        console.warn(`Skipping river detail for '${detail.siteName || 'Unknown Site (no siteName)'}' due to missing or empty gaugeName: ${JSON.stringify(detail)}`);
+        continue;
       }
-
-      const saukChartElement = document.createElement('river-level-chart') as RiverLevelChart;
-      saukChartElement.siteNameToQuery = saukSiteNameToQueryApi;
-      saukChartElement.chartTitle = saukChartTitle;
-      document.body.appendChild(saukChartElement);
-
-    } else {
-      document.body.textContent = 'Could not determine a site to display.';
+      // Optional: you might also want to ensure detail.siteName is present if it's critical for display
+      // if (!detail.siteName || detail.siteName.trim() === '') {
+      //   console.warn(`Skipping river (gaugeName: '${detail.gaugeName}') due to empty siteName for display.`);
+      //   continue;
+      // }
+      const chartElement = document.createElement('river-level-chart') as RiverLevelChart;
+      chartElement.siteNameToQuery = detail.gaugeName; // Use gaugeName for the API query
+      chartElement.riverDetail = detail; // Pass the whole detail object
+      chartsContainer.appendChild(chartElement);
     }
 
   } catch (error) {
