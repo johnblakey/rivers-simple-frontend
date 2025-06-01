@@ -10,7 +10,6 @@ import {
   type RiverDetail,
 } from './utility/data';
 
-
 Chart.register(...registerables);
 
 @customElement('river-level-chart')
@@ -290,19 +289,24 @@ export class RiverLevelChart extends LitElement {
 }
 
 async function initializeApp() {
-  document.body.innerHTML = ''; // Clear any existing content
+  const appHost = document.getElementById('charts-host');
+  if (!appHost) {
+    console.error('Application host element (#charts-host) not found in index.html.');
+    document.body.textContent = 'Error: Application host element not found. Please ensure a <div id="charts-host"></div> exists in your HTML.';
+    return;
+  }
+  // Clear only the content of the appHost, not the entire body
+  appHost.innerHTML = '';
 
   try {
     const riverDetails = await getRiverDetails();
     if (!riverDetails || riverDetails.length === 0) {
-      document.body.textContent = 'No river details found.';
+      appHost.textContent = 'No river details found.';
       return;
     }
 
     const chartsContainer = document.createElement('div');
-    // Optional: Add a class for styling the container if needed
-    // chartsContainer.className = 'charts-container';
-    document.body.appendChild(chartsContainer);
+    appHost.appendChild(chartsContainer);
 
     for (const detail of riverDetails) {
       // Ensure siteName exists and is not empty, as it's used for querying and display
@@ -324,7 +328,7 @@ async function initializeApp() {
 
   } catch (error) {
     console.error("Failed to initialize application:", error);
-    document.body.textContent = `Error initializing application: ${error instanceof Error ? error.message : String(error)}`;
+    appHost.textContent = `Error initializing application: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
