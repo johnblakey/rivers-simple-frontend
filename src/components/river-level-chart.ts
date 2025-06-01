@@ -36,18 +36,10 @@ export class RiverLevelChart extends LitElement {
   // _isFetchingOrRendering is now part of fetchData logic, not a separate state for render logic
   private _isFetchingOperationInProgress: boolean = false;
 
-  protected updated(changedProperties: Map<string | number | symbol, unknown>): void {
-    let needsDataFetch = false;
-    if (changedProperties.has('siteNameToQuery')) {
-      needsDataFetch = true;
-    }
-    if (changedProperties.has('riverDetail')) {
+  protected willUpdate(changedProperties: Map<string | number | symbol, unknown>): void {
+    if (changedProperties.has('siteNameToQuery') || changedProperties.has('riverDetail')) {
       // If riverDetail changed, it might imply siteNameToQuery should also be updated if derived,
       // or at least titles might need refresh. Fetching data ensures consistency.
-      needsDataFetch = true;
-    }
-
-    if (needsDataFetch) {
       if (this.siteNameToQuery && this.riverDetail) {
         this.fetchData();
       } else {
@@ -55,14 +47,19 @@ export class RiverLevelChart extends LitElement {
         this.clearChartAndData();
       }
     }
+  }
 
+  protected updated(_changedProperties: Map<string | number | symbol, unknown>): void {
     // After states (_isLoading, _error, _hasData) are settled and component has re-rendered:
+    // Render the chart if data is available, we are not loading, there's no error,
+    // and a chart instance doesn't already exist.
+    // The chart instance is destroyed in fetchData or clearChartAndData before new states are set.
     if (!this._isLoading && !this._error && this._hasData && !this.chartInstance) {
       const canvas = this.shadowRoot?.querySelector('#riverChartCanvas') as HTMLCanvasElement | null;
       if (canvas) {
         this.renderChart(canvas);
       } else {
-        console.warn('RiverLevelChart: Canvas element not found when trying to render chart, though data is present.');
+        console.warn('RiverLevelChart: Canvas element not found after update, though data is present and chart should be rendered.');
       }
     }
   }
@@ -144,11 +141,10 @@ export class RiverLevelChart extends LitElement {
 
     const displayName = this.riverDetail?.siteName || 'River Levels';
 
-    // Ensure any previous instance on this canvas is destroyed (should be handled by fetchData, but good practice)
-    if (this.chartInstance) {
-        this.chartInstance.destroy();
-    }
-      const config: ChartConfiguration = {
+    // Pre-condition: this.chartInstance should be null when this method is called.
+    // The calling logic in `updated` ensures this.
+    // If an old instance existed, it should have been destroyed by `fetchData` or `clearChartAndData`.
+    const config: ChartConfiguration = {
         type: 'line',
         data: chartData,
         options: {
