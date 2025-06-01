@@ -237,7 +237,7 @@ export class RiverLevelChart extends LitElement {
             ? html`<div class="error">Error loading level data: ${this._error}</div>`
             : this._hasData
             ? html`<canvas id="riverChartCanvas"></canvas>`
-            : html`<div class="no-data">No current level data available for ${displayName}. River details above may still be relevant.</div>`
+            : html`<div class="no-data">No river gauge data available for ${displayName}.</div>`
           }
         </div>
       </div>
