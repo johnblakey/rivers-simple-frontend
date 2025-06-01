@@ -60,7 +60,7 @@ Follow defaults
 See scripts in package.json
 $ npm run
 
-Create package.json scripts
+Createed package.json scripts
 
 ### Run Scripts
 
@@ -70,13 +70,18 @@ Created a launch.json file that enables Debugging Extension of TypeScript
 
 ### Create a new app to test in Chrome
 
+$ npm run buildrun
+combines the below commands:
+
 $ npn run compile
 $ npm run build
 $ npm run dev
 
-VSCode "Run and Debug" test with Chrome, works by pointing at Vite dev server
+then run VSCode "Run and Debug" test with Chrome, works by pointing at Vite dev server
 
-## Local Testing Google Cloud Login
+## Local Testing Google Cloud Login (can remove)
+
+Was required if terminal or VS Code back when frontend directly connected to Datastore
 
 - Login for Cloud Code repo with river-level-0 | use VS Code menu to authenticate then choose the project name
 - $ gcloud auth login
@@ -97,11 +102,19 @@ h + Enter
 Quit Server
 q + Enter
 
+## Lit
+
+<https://lit.dev/articles/lit-cheat-sheet/>
+
+## Dockerize and Deploy to Google Cloud Run
+
+
+
 ## TODO
 
 - Create tailwind css
 
-## Production
+### Production
 
 - TODO - Put Lit in production mode
 - Verify if any other technology needs to be in production mode
