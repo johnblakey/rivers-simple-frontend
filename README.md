@@ -6,14 +6,14 @@ Simple HTML, CSS, TypeScript for rivers website <https://rivers.johnblakey.org/>
 
 - Create production version that is minified
 
-## Local Testing
+## Local Testing Google Cloud Login
 
 - Login for Cloud Code repo with river-level-0 | use VS Code menu to authenticate then choose the project name
 - $ gcloud auth login
 - Adjust to river-level-0 project
 - Login to Google Cloud CLI Application Default Credentials (ADC) to enable Datastore connection
 - $ gcloud auth login --update-adc
-- Use existing launch.json to run the application locally | VS Code > Run and Debug > next.js debug full stack
+- See instructions below for compiling and running the app
 
 ## Setup TypeScript Project
 
@@ -41,7 +41,7 @@ $ npm install --save-dev vite
 Create configs for Vite with tsconfig.json and package.json <https://github.com/vitejs/vite/tree/main/packages/create-vite/template-lit>
 
 $ npx vite
-Run the server, similar to Live Server (VS Code extension))
+Run the server, similar to Live Server (VS Code extension)
 
 $ npx vite build
 
@@ -62,10 +62,9 @@ Installed Prettier VSCode extension
 TODO - enable override of setup above in npm
 
 $ npm install --save-dev eslint @eslint/js globals
-
 $ npm install chartjs-adapter-date-fns date-fns
 $ npm install chart.js
-
+$ npm install lit
 
 $ npx eslint --init
 Follow defaults
@@ -75,17 +74,25 @@ $ npm run
 
 Create package.json scripts
 
-Run scripts
+### Run Scripts
+
 $ npm run (name_command)
 
 Created a launch.json file that enables Debugging Extension of TypeScript
 
-Install Lit
-$ npm install lit
+### Create a new app to test in Chrome
+
+$ npn run compile
+$ npm run build
+$ npm run dev
+
+VSCode "Run and Debug" test with Chrome, works by pointing at Vite dev server
 
 ## Vite
 
 <https://vite.dev/guide/>
+
+Server runs after using the script "npm run dev" and opens a terminal console
 
 See commands
 h + Enter
