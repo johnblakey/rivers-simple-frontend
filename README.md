@@ -2,19 +2,6 @@
 
 Simple HTML, CSS, TypeScript for rivers website <https://rivers.johnblakey.org/>
 
-## TODO
-
-- Create production version that is minified
-
-## Local Testing Google Cloud Login
-
-- Login for Cloud Code repo with river-level-0 | use VS Code menu to authenticate then choose the project name
-- $ gcloud auth login
-- Adjust to river-level-0 project
-- Login to Google Cloud CLI Application Default Credentials (ADC) to enable Datastore connection
-- $ gcloud auth login --update-adc
-- See instructions below for compiling and running the app
-
 ## Setup TypeScript Project
 
 Summary: plan to use the MDN recommended toolchain and coding style for beginners
@@ -88,6 +75,15 @@ $ npm run dev
 
 VSCode "Run and Debug" test with Chrome, works by pointing at Vite dev server
 
+## Local Testing Google Cloud Login
+
+- Login for Cloud Code repo with river-level-0 | use VS Code menu to authenticate then choose the project name
+- $ gcloud auth login
+- Adjust to river-level-0 project
+- Login to Google Cloud CLI Application Default Credentials (ADC) to enable Datastore connection
+- $ gcloud auth login --update-adc
+- See instructions below for compiling and running the app
+
 ## Vite
 
 <https://vite.dev/guide/>
@@ -99,3 +95,12 @@ h + Enter
 
 Quit Server
 q + Enter
+
+## TODO
+
+- Create tailwind css
+
+## Production
+
+- TODO - Put Lit in production mode
+- Verify if any other technology needs to be in production mode
