@@ -221,46 +221,8 @@ export class RiverLevelChart extends LitElement {
       });
     }
 
-    // Current Level Annotation
+    // Get the latest level for the subtitle
     const latestLevel = this._levels.length > 0 ? this._levels[this._levels.length - 1] : null;
-    const currentLevelPointAnnotations: AnnotationOptions[] = [];
-
-    // Find y-axis min/max for dynamic label positioning
-    const yValues = this._levels.map(l => l.value);
-    const yMin = Math.min(...yValues);
-    const yMax = Math.max(...yValues);
-
-    if (latestLevel) {
-      const yRange = yMax - yMin;
-      const isNearTop = yRange > 0 && (latestLevel.value > yMax - 0.2 * yRange);
-
-      currentLevelPointAnnotations.push({
-        type: 'point',
-        xValue: new Date(latestLevel.timestamp).valueOf(),
-        yValue: latestLevel.value,
-        backgroundColor: 'rgba(255, 159, 64, 0.9)',
-        radius: 6,
-        borderColor: 'rgba(200, 100, 30, 1)',
-        borderWidth: 2,
-        label: {
-          content: `Current: ${latestLevel.value} ${latestLevel.unitCode}`,
-          display: true,
-          position: isNearTop ? 'bottom' : 'top',
-          textAlign: 'center',
-          yAdjust: isNearTop ? 12 : -12,
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-          color: getCurrentLevelLabelColor(latestLevel.value, lowAdvised, highAdvised),
-          font: { size: 12, weight: 'bold' },
-          padding: { top: 6, bottom: 6, left: 10, right: 10 },
-          borderRadius: 4,
-          clip: false,
-        },
-        drawTime: 'afterDatasetsDraw',
-      } as AnnotationOptions);
-    }
-
-    // Lines are added after boxes so they draw on top of them (if same drawTime)
-    // but still before datasets.
     // Pre-condition: this.chartInstance should be null when this method is called.
     // The calling logic in `updated` ensures this.
     // If an old instance existed, it should have been destroyed by `fetchData` or `clearChartAndData`.
@@ -272,7 +234,10 @@ export class RiverLevelChart extends LitElement {
           maintainAspectRatio: true,
           layout: {
             padding: {
-              top: 30 // Add padding to the top of the chart area to make space for labels
+              // Increased top padding to ensure enough space for the chart title
+              // and the current level annotation label, especially when it's positioned
+              // above the last data point. Label can extend ~24px above point center.
+              top: 50
             }
           },
           scales: {
@@ -303,6 +268,19 @@ export class RiverLevelChart extends LitElement {
                 display: true,
                 text: displayName
             },
+            subtitle: {
+              display: !!latestLevel, // Only display if there's a latest level
+              text: latestLevel ? `Current: ${latestLevel.value} ${latestLevel.unitCode}` : '',
+              color: latestLevel ? getCurrentLevelLabelColor(latestLevel.value, lowAdvised, highAdvised) : LABEL_COLORS.default,
+              font: {
+                size: 14, // Adjust size as needed
+                weight: 'bold'
+              },
+              padding: {
+                top: 0, // Adjust spacing if needed
+                bottom: 10 // Adds some space between subtitle and chart plot area
+              }
+            },
             annotation: {
               annotations: [
                 ...(hasLow ? [{
@@ -323,8 +301,7 @@ export class RiverLevelChart extends LitElement {
                   borderDash: [6, 6],
                   label: { content: `High: ${highAdvised}`, display: true, position: 'start', backgroundColor: highLineColor, color: 'white', font: {size: 10}, padding: 3 },
                 } as AnnotationOptions] : []),
-                ...annotations, // Add the box annotations
-                ...currentLevelPointAnnotations // Add the current level point annotation
+                ...annotations // Add the box (band) annotations
               ]
             }
           },
