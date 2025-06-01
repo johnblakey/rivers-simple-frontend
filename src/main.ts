@@ -1,6 +1,4 @@
-import {
-  getRiverDetails,
-} from './utility/data';
+import { getRiverDetails } from './utility/data';
 import { RiverLevelChart } from './components/river-level-chart'; // Import the component
 
 async function initializeApp() {
@@ -32,11 +30,9 @@ async function initializeApp() {
 
       const chartElement = new RiverLevelChart(); // Create an instance of the imported component
 
-      // Use gaugeName for the API query if it's valid, otherwise pass an empty string.
-      // The RiverLevelChart component will handle an empty siteNameToQuery by not fetching chart data.
-      chartElement.siteNameToQuery = (detail.gaugeName && detail.gaugeName.trim() !== '')
-        ? detail.gaugeName
-        : '';
+      // Pass the siteCode for the API query.
+      // The RiverLevelChart component will handle an empty siteCode by not fetching chart data.
+      chartElement.siteCode = detail.siteCode;
       chartElement.riverDetail = detail; // Pass the whole detail object
       chartsContainer.appendChild(chartElement);
     }

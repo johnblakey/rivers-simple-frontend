@@ -6,7 +6,7 @@ import 'chartjs-adapter-date-fns';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 
 import {
-  getRiverLevelsBySiteName,
+  getRiverLevelsBySiteCode,
   type RiverLevel,
   type RiverDetail,
 } from '../utility/data';
@@ -16,7 +16,7 @@ Chart.register(...registerables, AnnotationPlugin);
 @customElement('river-level-chart')
 export class RiverLevelChart extends LitElement {
   @property({ type: String })
-  siteNameToQuery: string = '';
+  siteCode: string = '';
 
   @state()
   private _levels: RiverLevel[] = [];
@@ -39,13 +39,13 @@ export class RiverLevelChart extends LitElement {
   private _isFetchingOperationInProgress: boolean = false;
 
   protected willUpdate(changedProperties: Map<string | number | symbol, unknown>): void {
-    if (changedProperties.has('siteNameToQuery') || changedProperties.has('riverDetail')) {
-      // If riverDetail changed, it might imply siteNameToQuery should also be updated if derived,
+    if (changedProperties.has('siteCode') || changedProperties.has('riverDetail')) {
+      // If riverDetail changed, it might imply siteCode should also be updated if derived,
       // or at least titles might need refresh. Fetching data ensures consistency.
-      if (this.siteNameToQuery && this.riverDetail) {
+      if (this.siteCode && this.riverDetail) {
         this.fetchData();
       } else {
-        // siteNameToQuery or riverDetail is missing, clear chart and data
+        // siteCode or riverDetail is missing, clear chart and data
         this.clearChartAndData();
       }
     }
@@ -79,19 +79,19 @@ export class RiverLevelChart extends LitElement {
   }
 
   async fetchData() {
-    if (!this.siteNameToQuery) {
-      console.debug(`Skipping fetchData for ${this.riverDetail?.siteName || 'Unknown Site'}: no siteNameToQuery provided.`);
+    if (!this.siteCode || this.siteCode.trim() === '') {
+      console.debug(`Skipping fetchData for ${this.riverDetail?.siteName || 'Unknown Site'}: no siteCode provided.`);
       this.clearChartAndData();
       return;
     }
     if (!this.riverDetail) {
-      console.debug(`Skipping fetchData for site ${this.siteNameToQuery}: no riverDetail provided.`);
+      console.debug(`Skipping fetchData for site code ${this.siteCode}: no riverDetail provided.`);
       this.clearChartAndData();
       return;
     }
 
     if (this._isFetchingOperationInProgress) {
-      console.warn(`fetchData skipped for ${this.siteNameToQuery}: operation already in progress.`);
+      console.warn(`fetchData skipped for site code ${this.siteCode}: operation already in progress.`);
       return;
     }
 
@@ -106,10 +106,10 @@ export class RiverLevelChart extends LitElement {
     }
 
     try {
-      const levels = await getRiverLevelsBySiteName(this.siteNameToQuery);
+      const levels = await getRiverLevelsBySiteCode(this.siteCode);
 
       if (!this.isConnected) {
-        console.debug(`Component disconnected for ${this.siteNameToQuery} after await. Aborting.`);
+        console.debug(`Component disconnected for site code ${this.siteCode} after await. Aborting.`);
         this._isFetchingOperationInProgress = false; // Release lock
         return;
       }
@@ -120,7 +120,7 @@ export class RiverLevelChart extends LitElement {
 
     } catch (err) {
       this._error = err instanceof Error ? err.message : "Failed to load river levels.";
-      console.error(`Error fetching data for ${this.siteNameToQuery}:`, err);
+      console.error(`Error fetching data for site code ${this.siteCode}:`, err);
       this._hasData = false;
     } finally {
       this._isLoading = false;
@@ -315,7 +315,7 @@ export class RiverLevelChart extends LitElement {
   }
 
   render() {
-    const displayName = this.riverDetail?.siteName || this.siteNameToQuery || 'Loading River Data...';
+    const displayName = this.riverDetail?.siteName || this.siteCode || 'Loading River Data...';
 
     return html`
       <div class="river-info-container">

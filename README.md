@@ -75,7 +75,9 @@ combines the individual TypeScript, linting, and server build into one for testi
 
 then run VSCode "Run and Debug" test with Chrome, works by pointing at Vite dev server
 
-## Local Testing Google Cloud Login (can remove after full new restart succeeds without Google login)
+Set env in Cloud Run to development so that endpoint is available to local frontend
+
+### Local Testing Google Cloud Login (can remove after full new restart succeeds without Google login)
 
 Was required if terminal or VS Code back when frontend directly connected to Datastore
 
@@ -104,7 +106,7 @@ q + Enter
 
 ## Dockerize and Deploy to Google Cloud Run
 
-
+TODO - add steps from backend
 
 ## TODO
 
@@ -114,3 +116,4 @@ q + Enter
 
 - TODO - Put Lit in production mode
 - Verify if any other technology needs to be in production mode
+- Verify that Cloud Run backend deployment is set to production env after frontend deployment

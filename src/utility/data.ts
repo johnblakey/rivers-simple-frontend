@@ -20,7 +20,7 @@ export interface RiverDetail {
   lowAdvisedCFS: number;
   siteCode: string; // Can be an empty string
   siteName: string;
-  gaugeName: string; // The name to be used for querying the riverlevels endpoint
+  gaugeName: string; // The descriptive name of the gauge, often from the source system (e.g., USGS). Not used for querying river levels via site code.
 }
 
 const BASE_API_URL = "https://api.rivers.johnblakey.org";
@@ -56,12 +56,11 @@ export async function getRiverDetails(): Promise<RiverDetail[]> {
 
 /**
  * Fetches water level time series data for a specific site by its name from the API.
- * @param siteName The name of the site to fetch water levels for.
+ * @param siteCode The site code (e.g., USGS site identifier) to fetch water levels for.
  * @returns A promise that resolves to an array of RiverLevel objects.
  * @throws Will throw an error if the fetch operation fails.
  */
-export async function getRiverLevelsBySiteName(siteName: string): Promise<RiverLevel[]> {
-  const encodedSiteName = encodeURIComponent(siteName);
-  const url = `${BASE_API_URL}/riverlevels/sitename/${encodedSiteName}`;
+export async function getRiverLevelsBySiteCode(siteCode: string): Promise<RiverLevel[]> {
+  const url = `${BASE_API_URL}/riverlevels/sitecode/${siteCode}`;
   return fetchJSON<RiverLevel[]>(url);
 }
