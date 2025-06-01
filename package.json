@@ -6,12 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run lint && tsc && vite build",
     "preview": "vite preview",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
     "compile": "tsc",
-    "buildrun": "npm run compile && npm run build && npm run dev",
+    "build": "npm run compile && npm run lint && vite build && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

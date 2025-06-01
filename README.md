@@ -70,16 +70,12 @@ Created a launch.json file that enables Debugging Extension of TypeScript
 
 ### Create a new app to test in Chrome
 
-$ npm run buildrun
-combines the below commands:
-
-$ npn run compile
 $ npm run build
-$ npm run dev
+combines the individual TypeScript, linting, and server build into one for testing
 
 then run VSCode "Run and Debug" test with Chrome, works by pointing at Vite dev server
 
-## Local Testing Google Cloud Login (can remove)
+## Local Testing Google Cloud Login (can remove after full new restart succeeds without Google login)
 
 Was required if terminal or VS Code back when frontend directly connected to Datastore
 
