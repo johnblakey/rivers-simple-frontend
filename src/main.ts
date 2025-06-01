@@ -309,19 +309,19 @@ async function initializeApp() {
     appHost.appendChild(chartsContainer);
 
     for (const detail of riverDetails) {
-      // Ensure siteName exists and is not empty, as it's used for querying and display
-      // AND gaugeName exists for querying the levels API.
-      if (!detail.gaugeName || detail.gaugeName.trim() === '') {
-        console.warn(`Skipping river detail for '${detail.siteName || 'Unknown Site (no siteName)'}' due to missing or empty gaugeName: ${JSON.stringify(detail)}`);
+      // We must have a siteName to display something meaningful in the component.
+      if (!detail.siteName || detail.siteName.trim() === '') {
+        console.warn(`Skipping river detail due to missing or empty siteName for display: ${JSON.stringify(detail)}`);
         continue;
       }
-      // Optional: you might also want to ensure detail.siteName is present if it's critical for display
-      // if (!detail.siteName || detail.siteName.trim() === '') {
-      //   console.warn(`Skipping river (gaugeName: '${detail.gaugeName}') due to empty siteName for display.`);
-      //   continue;
-      // }
+
       const chartElement = document.createElement('river-level-chart') as RiverLevelChart;
-      chartElement.siteNameToQuery = detail.gaugeName; // Use gaugeName for the API query
+
+      // Use gaugeName for the API query if it's valid, otherwise pass an empty string.
+      // The RiverLevelChart component will handle an empty siteNameToQuery by not fetching chart data.
+      chartElement.siteNameToQuery = (detail.gaugeName && detail.gaugeName.trim() !== '')
+        ? detail.gaugeName
+        : '';
       chartElement.riverDetail = detail; // Pass the whole detail object
       chartsContainer.appendChild(chartElement);
     }
