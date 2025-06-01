@@ -321,9 +321,7 @@ export class RiverLevelChart extends LitElement {
         <h2>${displayName}</h2>
         ${this.riverDetail ? html`
           <div class="details">
-            <p>
-              <strong>Site Code:</strong> ${this.riverDetail.siteCode || 'N/A'}
-            </p>
+            <!-- Removed Site Code display -->
             ${this.riverDetail.americanWhitewaterLink ? html`
               <p>
                 <a href="${this.riverDetail.americanWhitewaterLink}" target="_blank" rel="noopener noreferrer">
