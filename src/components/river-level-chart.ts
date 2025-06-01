@@ -130,21 +130,23 @@ export class RiverLevelChart extends LitElement {
 
   private renderChart(canvas: HTMLCanvasElement) {
     const chartData: ChartData = {
-        labels: this._levels.map(level => new Date(level.timestamp)),
-        datasets: [{
-          label: `Flow (${this._levels.length > 0 ? this._levels[0].unitCode : 'N/A'})`,
-          data: this._levels.map(level => level.value),
-          borderColor: 'rgb(75, 192, 192)',
-          tension: 0.1,
-          fill: false, // Do not fill under the main data line itself
-        }],
-      };
+      labels: this._levels.map(level => new Date(level.timestamp)),
+      datasets: [{
+        label: `Flow (${this._levels.length > 0 ? this._levels[0].unitCode : 'N/A'})`,
+        data: this._levels.map(level => level.value),
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1,
+        fill: false,
+      }],
+    };
     const displayName = this.riverDetail?.siteName || 'River Levels';
 
-    // Annotation configurations
-    const annotations: AnnotationOptions[] = [];
+    // Move these above their first use!
     const lowAdvised = this.riverDetail?.lowAdvisedCFS;
     const highAdvised = this.riverDetail?.highAdvisedCFS;
+
+    // Annotation configurations
+    const annotations = getBandAnnotations(lowAdvised, highAdvised);
 
     const hasLow = typeof lowAdvised === 'number';
     const hasHigh = typeof highAdvised === 'number';
@@ -164,7 +166,7 @@ export class RiverLevelChart extends LitElement {
     if (hasLow) {
       annotations.push({
         type: 'box',
-        yMin: undefined, // Extends to the bottom of the chart scale
+        yMin: undefined,
         yMax: lowAdvised,
         backgroundColor: redColor,
         borderColor: 'transparent',
@@ -175,7 +177,6 @@ export class RiverLevelChart extends LitElement {
 
     // Green Band:
     if (hasLow && hasHigh && lowAdvised < highAdvised) {
-      // Between low and high
       annotations.push({
         type: 'box',
         yMin: lowAdvised,
@@ -186,21 +187,19 @@ export class RiverLevelChart extends LitElement {
         drawTime: 'beforeDatasetsDraw',
       });
     } else if (hasLow && !hasHigh) {
-      // Above low, if no high is defined
       annotations.push({
         type: 'box',
         yMin: lowAdvised,
-        yMax: undefined, // Extends to the top of the chart scale
+        yMax: undefined,
         backgroundColor: greenColor,
         borderColor: 'transparent',
         borderWidth: 0,
         drawTime: 'beforeDatasetsDraw',
       });
     } else if (!hasLow && hasHigh) {
-      // Below high, if no low is defined
       annotations.push({
         type: 'box',
-        yMin: undefined, // Extends to the bottom of the chart scale
+        yMin: undefined,
         yMax: highAdvised,
         backgroundColor: greenColor,
         borderColor: 'transparent',
@@ -214,7 +213,7 @@ export class RiverLevelChart extends LitElement {
       annotations.push({
         type: 'box',
         yMin: highAdvised,
-        yMax: undefined, // Extends to the top of the chart scale
+        yMax: undefined,
         backgroundColor: blueColor,
         borderColor: 'transparent',
         borderWidth: 0,
@@ -226,55 +225,38 @@ export class RiverLevelChart extends LitElement {
     const latestLevel = this._levels.length > 0 ? this._levels[this._levels.length - 1] : null;
     const currentLevelPointAnnotations: AnnotationOptions[] = [];
 
-    // Define text colors for the current level label, reflecting the band it's over
-    // These are solid versions of the band colors for good visibility of text.
-    const defaultLabelTextColor = 'white';
-    const textRedColor = 'rgb(255, 99, 132)';
-    const textGreenColor = 'rgb(76, 175, 80)';
-    const textBlueColor = 'rgb(54, 162, 235)';
+    // Find y-axis min/max for dynamic label positioning
+    const yValues = this._levels.map(l => l.value);
+    const yMin = Math.min(...yValues);
+    const yMax = Math.max(...yValues);
 
     if (latestLevel) {
+      const yRange = yMax - yMin;
+      const isNearTop = yRange > 0 && (latestLevel.value > yMax - 0.2 * yRange);
+
       currentLevelPointAnnotations.push({
         type: 'point',
-        xValue: new Date(latestLevel.timestamp).valueOf(), // Timestamp for x-axis
-        yValue: latestLevel.value,                         // Value for y-axis
-        backgroundColor: 'rgba(255, 159, 64, 0.9)',      // A distinct color for the point
-        radius: 5,
+        xValue: new Date(latestLevel.timestamp).valueOf(),
+        yValue: latestLevel.value,
+        backgroundColor: 'rgba(255, 159, 64, 0.9)',
+        radius: 6,
         borderColor: 'rgba(200, 100, 30, 1)',
-        borderWidth: 1.5,
+        borderWidth: 2,
         label: {
           content: `Current: ${latestLevel.value} ${latestLevel.unitCode}`,
           display: true,
-          // Position the label centered above the point
-          position: 'top',
+          position: isNearTop ? 'bottom' : 'top',
           textAlign: 'center',
-          // yAdjust moves the label up. Point radius is 5.
-          // A yAdjust of -8 positions the bottom of the label 3px above the point's circle.
-          yAdjust: -8,
-          backgroundColor: 'rgba(0, 0, 0, 0.75)', // Keep label background dark for contrast
-          color: (() => { // Determine text color based on the band the level falls into
-            const currentValue = latestLevel.value;
-            // hasLow/hasHigh ensure lowAdvised/highAdvised are numbers if true.
-            if (hasHigh && currentValue > highAdvised!) {
-              return textBlueColor;
-            } else if (hasLow && currentValue < lowAdvised!) {
-              return textRedColor;
-            } else if (hasLow && hasHigh && currentValue >= lowAdvised! && currentValue <= highAdvised!) {
-              return textGreenColor;
-            } else if (hasLow && !hasHigh && currentValue >= lowAdvised!) { // In green zone above low, when no high is defined
-              return textGreenColor;
-            } else if (!hasLow && hasHigh && currentValue <= highAdvised!) { // In green zone below high, when no low is defined
-              return textGreenColor;
-            }
-            return defaultLabelTextColor; // Default text color if no specific band applies
-          })(),
-          font: { size: 10, weight: 'bold' },
-          padding: { top: 3, bottom: 3, left: 5, right: 5 },
-          borderRadius: 3,
-
+          yAdjust: isNearTop ? 12 : -12,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          color: getCurrentLevelLabelColor(latestLevel.value, lowAdvised, highAdvised),
+          font: { size: 12, weight: 'bold' },
+          padding: { top: 6, bottom: 6, left: 10, right: 10 },
+          borderRadius: 4,
+          clip: false,
         },
-        drawTime: 'afterDatasetsDraw', // Draw on top of datasets
-      } as AnnotationOptions); // Type assertion for complex annotation object
+        drawTime: 'afterDatasetsDraw',
+      } as AnnotationOptions);
     }
 
     // Lines are added after boxes so they draw on top of them (if same drawTime)
@@ -449,4 +431,43 @@ export class RiverLevelChart extends LitElement {
       font-style: italic;
     }
   `;
+}
+
+const BAND_COLORS = {
+  red: 'rgba(255, 99, 132, 0.2)',
+  green: 'rgba(76, 175, 80, 0.2)',
+  blue: 'rgba(54, 162, 235, 0.2)',
+};
+const LABEL_COLORS = {
+  default: 'white',
+  red: 'rgb(255, 99, 132)',
+  green: 'rgb(76, 175, 80)',
+  blue: 'rgb(54, 162, 235)',
+};
+
+function getBandAnnotations(low: number | undefined, high: number | undefined) {
+  const bands: AnnotationOptions[] = [];
+  if (typeof low === 'number') {
+    bands.push({ type: 'box', yMax: low, backgroundColor: BAND_COLORS.red, borderColor: 'transparent', borderWidth: 0, drawTime: 'beforeDatasetsDraw' });
+  }
+  if (typeof low === 'number' && typeof high === 'number' && low < high) {
+    bands.push({ type: 'box', yMin: low, yMax: high, backgroundColor: BAND_COLORS.green, borderColor: 'transparent', borderWidth: 0, drawTime: 'beforeDatasetsDraw' });
+  } else if (typeof low === 'number' && typeof high !== 'number') {
+    bands.push({ type: 'box', yMin: low, backgroundColor: BAND_COLORS.green, borderColor: 'transparent', borderWidth: 0, drawTime: 'beforeDatasetsDraw' });
+  } else if (typeof high === 'number' && typeof low !== 'number') {
+    bands.push({ type: 'box', yMax: high, backgroundColor: BAND_COLORS.green, borderColor: 'transparent', borderWidth: 0, drawTime: 'beforeDatasetsDraw' });
+  }
+  if (typeof high === 'number') {
+    bands.push({ type: 'box', yMin: high, backgroundColor: BAND_COLORS.blue, borderColor: 'transparent', borderWidth: 0, drawTime: 'beforeDatasetsDraw' });
+  }
+  return bands;
+}
+
+function getCurrentLevelLabelColor(value: number, low: number | undefined, high: number | undefined) {
+  if (typeof high === 'number' && value > high) return LABEL_COLORS.blue;
+  if (typeof low === 'number' && value < low) return LABEL_COLORS.red;
+  if (typeof low === 'number' && typeof high === 'number' && value >= low && value <= high) return LABEL_COLORS.green;
+  if (typeof low === 'number' && typeof high !== 'number' && value >= low) return LABEL_COLORS.green;
+  if (typeof high === 'number' && typeof low !== 'number' && value <= high) return LABEL_COLORS.green;
+  return LABEL_COLORS.default;
 }
