@@ -234,10 +234,10 @@ export class RiverLevelChart extends LitElement {
           maintainAspectRatio: true,
           layout: {
             padding: {
-              // Increased top padding to ensure enough space for the chart title
-              // and the current level annotation label, especially when it's positioned
-              // above the last data point. Label can extend ~24px above point center.
-              top: 50
+              // Padding between the bottom of the subtitle element (if displayed)
+              // and the top of the chart plot area. The subtitle itself has its own
+              // bottom padding (e.g., 10px via `plugins.subtitle.padding.bottom`).
+              top: 15 // Reduced from 50 to minimize whitespace
             }
           },
           scales: {
@@ -266,7 +266,7 @@ export class RiverLevelChart extends LitElement {
           plugins: {
             subtitle: {
               display: !!latestLevel, // Only display if there's a latest level
-              text: latestLevel ? `Current: ${latestLevel.value} ${latestLevel.unitCode}` : '',
+              text: latestLevel ? `Current Level: ${latestLevel.value} ${latestLevel.unitCode}` : '',
               color: latestLevel ? getCurrentLevelLabelColor(latestLevel.value, lowAdvised, highAdvised) : LABEL_COLORS.default,
               font: {
                 size: 14, // Adjust size as needed
