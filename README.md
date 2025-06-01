@@ -113,6 +113,7 @@ TODO - add steps from backend
 - Bug fix: fix Lit graph x-axis formatting issue - only shows time
 - Create Dockerfile
 - Create tailwind css
+- Change structure of html and typescirpt to allow links to particular dashboards (url#river_name)
 - Add Terms of Use page, create a separate page
 
 ### Production
