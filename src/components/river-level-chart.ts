@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { Chart, registerables, type ChartConfiguration, type ChartData } from 'chart.js/auto';
+import AnnotationPlugin, { type AnnotationOptions } from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
 
 import {
@@ -9,7 +10,7 @@ import {
   type RiverDetail,
 } from '../utility/data';
 
-Chart.register(...registerables);
+Chart.register(...registerables, AnnotationPlugin);
 
 @customElement('river-level-chart')
 export class RiverLevelChart extends LitElement {
@@ -131,16 +132,153 @@ export class RiverLevelChart extends LitElement {
     const chartData: ChartData = {
         labels: this._levels.map(level => new Date(level.timestamp)),
         datasets: [{
-          label: `Flow (${this._levels.length > 0 ? this._levels[0].unitCode : 'ft3/s'})`,
+          label: `Flow (${this._levels.length > 0 ? this._levels[0].unitCode : 'N/A'})`,
           data: this._levels.map(level => level.value),
           borderColor: 'rgb(75, 192, 192)',
           tension: 0.1,
-          fill: false,
+          fill: false, // Do not fill under the main data line itself
         }],
       };
-
     const displayName = this.riverDetail?.siteName || 'River Levels';
 
+    // Annotation configurations
+    const annotations: AnnotationOptions[] = [];
+    const lowAdvised = this.riverDetail?.lowAdvisedCFS;
+    const highAdvised = this.riverDetail?.highAdvisedCFS;
+
+    const hasLow = typeof lowAdvised === 'number';
+    const hasHigh = typeof highAdvised === 'number';
+
+    const redColor = 'rgba(255, 99, 132, 0.2)';
+    const greenColor = 'rgba(76, 175, 80, 0.2)';
+    const blueColor = 'rgba(54, 162, 235, 0.2)';
+
+    const lowLineColor = 'rgba(200, 0, 0, 0.9)';
+    const highLineColor = 'rgba(0, 0, 200, 0.9)';
+
+    if (hasLow && hasHigh && lowAdvised >= highAdvised) {
+      console.warn(`RiverLevelChart: Low advised CFS (${lowAdvised}) is not less than high advised CFS (${highAdvised}). Bands might overlap or not appear as expected.`);
+    }
+
+    // Red Band: Below low level
+    if (hasLow) {
+      annotations.push({
+        type: 'box',
+        yMin: undefined, // Extends to the bottom of the chart scale
+        yMax: lowAdvised,
+        backgroundColor: redColor,
+        borderColor: 'transparent',
+        borderWidth: 0,
+        drawTime: 'beforeDatasetsDraw',
+      });
+    }
+
+    // Green Band:
+    if (hasLow && hasHigh && lowAdvised < highAdvised) {
+      // Between low and high
+      annotations.push({
+        type: 'box',
+        yMin: lowAdvised,
+        yMax: highAdvised,
+        backgroundColor: greenColor,
+        borderColor: 'transparent',
+        borderWidth: 0,
+        drawTime: 'beforeDatasetsDraw',
+      });
+    } else if (hasLow && !hasHigh) {
+      // Above low, if no high is defined
+      annotations.push({
+        type: 'box',
+        yMin: lowAdvised,
+        yMax: undefined, // Extends to the top of the chart scale
+        backgroundColor: greenColor,
+        borderColor: 'transparent',
+        borderWidth: 0,
+        drawTime: 'beforeDatasetsDraw',
+      });
+    } else if (!hasLow && hasHigh) {
+      // Below high, if no low is defined
+      annotations.push({
+        type: 'box',
+        yMin: undefined, // Extends to the bottom of the chart scale
+        yMax: highAdvised,
+        backgroundColor: greenColor,
+        borderColor: 'transparent',
+        borderWidth: 0,
+        drawTime: 'beforeDatasetsDraw',
+      });
+    }
+
+    // Blue Band: Above high level
+    if (hasHigh) {
+      annotations.push({
+        type: 'box',
+        yMin: highAdvised,
+        yMax: undefined, // Extends to the top of the chart scale
+        backgroundColor: blueColor,
+        borderColor: 'transparent',
+        borderWidth: 0,
+        drawTime: 'beforeDatasetsDraw',
+      });
+    }
+
+    // Current Level Annotation
+    const latestLevel = this._levels.length > 0 ? this._levels[this._levels.length - 1] : null;
+    const currentLevelPointAnnotations: AnnotationOptions[] = [];
+
+    // Define text colors for the current level label, reflecting the band it's over
+    // These are solid versions of the band colors for good visibility of text.
+    const defaultLabelTextColor = 'white';
+    const textRedColor = 'rgb(255, 99, 132)';
+    const textGreenColor = 'rgb(76, 175, 80)';
+    const textBlueColor = 'rgb(54, 162, 235)';
+
+    if (latestLevel) {
+      currentLevelPointAnnotations.push({
+        type: 'point',
+        xValue: new Date(latestLevel.timestamp).valueOf(), // Timestamp for x-axis
+        yValue: latestLevel.value,                         // Value for y-axis
+        backgroundColor: 'rgba(255, 159, 64, 0.9)',      // A distinct color for the point
+        radius: 5,
+        borderColor: 'rgba(200, 100, 30, 1)',
+        borderWidth: 1.5,
+        label: {
+          content: `Current: ${latestLevel.value} ${latestLevel.unitCode}`,
+          display: true,
+          // Position the label centered above the point
+          position: 'top',
+          textAlign: 'center',
+          // yAdjust moves the label up. Point radius is 5.
+          // A yAdjust of -8 positions the bottom of the label 3px above the point's circle.
+          yAdjust: -8,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)', // Keep label background dark for contrast
+          color: (() => { // Determine text color based on the band the level falls into
+            const currentValue = latestLevel.value;
+            // hasLow/hasHigh ensure lowAdvised/highAdvised are numbers if true.
+            if (hasHigh && currentValue > highAdvised!) {
+              return textBlueColor;
+            } else if (hasLow && currentValue < lowAdvised!) {
+              return textRedColor;
+            } else if (hasLow && hasHigh && currentValue >= lowAdvised! && currentValue <= highAdvised!) {
+              return textGreenColor;
+            } else if (hasLow && !hasHigh && currentValue >= lowAdvised!) { // In green zone above low, when no high is defined
+              return textGreenColor;
+            } else if (!hasLow && hasHigh && currentValue <= highAdvised!) { // In green zone below high, when no low is defined
+              return textGreenColor;
+            }
+            return defaultLabelTextColor; // Default text color if no specific band applies
+          })(),
+          font: { size: 10, weight: 'bold' },
+          padding: { top: 3, bottom: 3, left: 5, right: 5 },
+          borderRadius: 3,
+
+        },
+        drawTime: 'afterDatasetsDraw', // Draw on top of datasets
+      } as AnnotationOptions); // Type assertion for complex annotation object
+    }
+
+    // Lines are added after boxes so they draw on top of them (if same drawTime)
+    // but still before datasets.
     // Pre-condition: this.chartInstance should be null when this method is called.
     // The calling logic in `updated` ensures this.
     // If an old instance existed, it should have been destroyed by `fetchData` or `clearChartAndData`.
@@ -150,6 +288,11 @@ export class RiverLevelChart extends LitElement {
         options: {
           responsive: true,
           maintainAspectRatio: true,
+          layout: {
+            padding: {
+              top: 30 // Add padding to the top of the chart area to make space for labels
+            }
+          },
           scales: {
             x: {
               type: 'time',
@@ -169,15 +312,40 @@ export class RiverLevelChart extends LitElement {
               title: {
                 display: true,
                 text: `Level (${this._levels[0]?.unitCode || 'N/A'})` // Safe access
-              }
+              },
+              grace: '5%' // Add 5% grace to the top/bottom of the scale to prevent clipping
             }
           },
           plugins: {
             title: {
                 display: true,
                 text: displayName
+            },
+            annotation: {
+              annotations: [
+                ...(hasLow ? [{
+                  type: 'line',
+                  yMin: lowAdvised,
+                  yMax: lowAdvised,
+                  borderColor: lowLineColor,
+                  borderWidth: 1.5,
+                  borderDash: [6, 6],
+                  label: { content: `Low: ${lowAdvised}`, display: true, position: 'start', backgroundColor: lowLineColor, color: 'white', font: {size: 10}, padding: 3 },
+                } as AnnotationOptions] : []), // Type assertion for complex objects
+                ...(hasHigh ? [{
+                  type: 'line',
+                  yMin: highAdvised,
+                  yMax: highAdvised,
+                  borderColor: highLineColor,
+                  borderWidth: 1.5,
+                  borderDash: [6, 6],
+                  label: { content: `High: ${highAdvised}`, display: true, position: 'start', backgroundColor: highLineColor, color: 'white', font: {size: 10}, padding: 3 },
+                } as AnnotationOptions] : []),
+                ...annotations, // Add the box annotations
+                ...currentLevelPointAnnotations // Add the current level point annotation
+              ]
             }
-          }
+          },
         }
       };
     this.chartInstance = new Chart(canvas, config);

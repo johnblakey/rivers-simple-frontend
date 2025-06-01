@@ -51,6 +51,7 @@ TODO - enable override of setup above in npm
 $ npm install --save-dev eslint @eslint/js globals
 $ npm install chartjs-adapter-date-fns date-fns
 $ npm install chart.js
+$ npm install chartjs-plugin-annotation
 $ npm install lit
 
 $ npx eslint --init
