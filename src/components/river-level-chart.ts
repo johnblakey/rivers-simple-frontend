@@ -139,7 +139,6 @@ export class RiverLevelChart extends LitElement {
         fill: false,
       }],
     };
-    const displayName = this.riverDetail?.siteName || 'River Levels';
 
     // Move these above their first use!
     const lowAdvised = this.riverDetail?.lowAdvisedCFS;
@@ -264,10 +263,6 @@ export class RiverLevelChart extends LitElement {
             }
           },
           plugins: {
-            title: {
-                display: true,
-                text: displayName
-            },
             subtitle: {
               display: !!latestLevel, // Only display if there's a latest level
               text: latestLevel ? `Current: ${latestLevel.value} ${latestLevel.unitCode}` : '',
