@@ -11,20 +11,6 @@
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}",
       "sourceMaps": true
-    },
-    {
-        "type": "chrome",
-        "request": "launch",
-        "name": "Debug with envs in Chrome",
-        "url": "http://localhost:5173",
-        "webRoot": "${workspaceFolder}",
-        "sourceMaps": true,
-        "env": {
-            "PROJECT_ID": "GOOGLEDOCUMENT",
-            "WATER_LEVEL_KIND": "GOOGLEDOCUMENT",
-            "RIVER_DETAILS_KIND": "GOOGLEDOCUMENT",
-            "DATASTORE_NAMESPACE": "GOOGLEDOCUMENT"
-        }
     }
   ]
 }
