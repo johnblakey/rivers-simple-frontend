@@ -1,6 +1,10 @@
 import { getRiverDetails } from './utility/data';
 import { RiverLevelChart } from './components/river-level-chart'; // Import the component
 
+console.info(
+  "Welcome to the rivers.johnblakey.org. If you find any bugs, security issues or have feedback, please email me at johnblakeyorg@gmail.com. Blunt tone welcome."
+);
+
 async function initializeApp() {
   const appHost = document.getElementById('charts-host');
   if (!appHost) {

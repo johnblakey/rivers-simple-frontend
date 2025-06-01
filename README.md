@@ -111,9 +111,11 @@ TODO - add steps from backend
 ## TODO
 
 - Create tailwind css
+- Add Terms of Use page, create a separate page
 
 ### Production
 
 - TODO - Put Lit in production mode
 - Verify if any other technology needs to be in production mode
 - Verify that Cloud Run backend deployment is set to production env after frontend deployment
+- Delete riverdetails gaugeName properties, (workaround need now removed)
