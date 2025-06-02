@@ -111,7 +111,7 @@ export class RiverLevelChart extends LitElement {
           x: {
             type: 'time',
             time: {
-              unit: 'hour',
+              unit: 'day',
               tooltipFormat: 'MMM d, yyyy HH:mm',
               displayFormats: {
                 hour: 'MMM d, HH:mm',
