@@ -6,9 +6,7 @@ import {
   type ChartConfiguration,
   type ChartData,
 } from "chart.js/auto";
-import AnnotationPlugin, {
-  type AnnotationOptions,
-} from "chartjs-plugin-annotation";
+import AnnotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotation";
 import "chartjs-adapter-date-fns";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 
@@ -18,7 +16,6 @@ import {
   type RiverDetail,
 } from "../utility/data";
 
-// Simple linkify function to convert URLs in text to clickable links
 function linkify(text: string): string {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
@@ -60,11 +57,7 @@ function slugify(text: string): string {
     .replace(/-+$/, "");
 }
 
-function getBandAnnotations(
-  low: number | undefined,
-  high: number | undefined,
-  colors: typeof CHART_COLORS.bands,
-): AnnotationOptions[] {
+function getBandAnnotations(low: number | undefined, high: number | undefined, colors: typeof CHART_COLORS.bands): AnnotationOptions[] {
   const common = {
     borderColor: "transparent",
     borderWidth: 0,
@@ -74,56 +67,25 @@ function getBandAnnotations(
   const bands: AnnotationOptions[] = [];
 
   if (typeof low === "number") {
-    bands.push({
-      type: "box",
-      yMax: low,
-      backgroundColor: colors.belowLow,
-      ...common,
-    });
+    bands.push({ type: "box", yMax: low, backgroundColor: colors.belowLow, ...common });
   }
 
   if (typeof low === "number" && typeof high === "number" && low < high) {
-    bands.push({
-      type: "box",
-      yMin: low,
-      yMax: high,
-      backgroundColor: colors.optimal,
-      ...common,
-    });
+    bands.push({ type: "box", yMin: low, yMax: high, backgroundColor: colors.optimal, ...common });
   } else if (typeof low === "number") {
-    bands.push({
-      type: "box",
-      yMin: low,
-      backgroundColor: colors.optimal,
-      ...common,
-    });
+    bands.push({ type: "box", yMin: low, backgroundColor: colors.optimal, ...common });
   } else if (typeof high === "number") {
-    bands.push({
-      type: "box",
-      yMax: high,
-      backgroundColor: colors.optimal,
-      ...common,
-    });
+    bands.push({ type: "box", yMax: high, backgroundColor: colors.optimal, ...common });
   }
 
   if (typeof high === "number") {
-    bands.push({
-      type: "box",
-      yMin: high,
-      backgroundColor: colors.aboveHigh,
-      ...common,
-    });
+    bands.push({ type: "box", yMin: high, backgroundColor: colors.aboveHigh, ...common });
   }
 
   return bands;
 }
 
-function getLineAnnotations(
-  low: number | undefined,
-  high: number | undefined,
-  lines: typeof CHART_COLORS.lines,
-  labelColor: string,
-): AnnotationOptions[] {
+function getLineAnnotations(low: number | undefined, high: number | undefined, lines: typeof CHART_COLORS.lines, labelColor: string): AnnotationOptions[] {
   const commonLine = { borderWidth: 1.5, borderDash: [6, 6] };
   const label = {
     display: true,
@@ -153,40 +115,17 @@ function getLineAnnotations(
       yMax: high,
       borderColor: lines.high,
       ...commonLine,
-      label: {
-        ...label,
-        content: `High: ${high}`,
-        backgroundColor: lines.high,
-      },
+      label: { ...label, content: `High: ${high}`, backgroundColor: lines.high },
     });
   }
 
   return annotations;
 }
 
-function getCurrentLevelLabelColor(
-  value: number,
-  low: number | undefined,
-  high: number | undefined,
-  colors: typeof CHART_COLORS.text,
-): string {
-  if (typeof low === "number" && value < low) {
-    return colors.subtitleLow;
-  }
-
-  if (
-    typeof low === "number" &&
-    typeof high === "number" &&
-    value >= low &&
-    value <= high
-  ) {
-    return colors.subtitleOptimal;
-  }
-
-  if (typeof high === "number" && value > high) {
-    return colors.subtitleHigh;
-  }
-
+function getCurrentLevelLabelColor(value: number, low: number | undefined, high: number | undefined, colors: typeof CHART_COLORS.text): string {
+  if (typeof low === "number" && value < low) return colors.subtitleLow;
+  if (typeof low === "number" && typeof high === "number" && value >= low && value <= high) return colors.subtitleOptimal;
+  if (typeof high === "number" && value > high) return colors.subtitleHigh;
   return colors.subtitleDefault;
 }
 
@@ -288,9 +227,7 @@ export class RiverLevelChart extends LitElement {
   }
 
   private async fetchData(): Promise<void> {
-    if (!this.siteCode || !this.riverDetail || this.isFetchingInProgress) {
-      return;
-    }
+    if (!this.siteCode || !this.riverDetail || this.isFetchingInProgress) return;
 
     this.isFetchingInProgress = true;
     this.isLoading = true;
@@ -302,9 +239,7 @@ export class RiverLevelChart extends LitElement {
       const levels = await getRiverLevelsBySiteCode(this.siteCode);
       if (!this.isConnected) return;
 
-      this.levels = levels.sort((a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      );
+      this.levels = levels.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       this.hasData = this.levels.length > 0;
     } catch (err) {
       this.error = err instanceof Error ? err.message : "Failed to load river levels.";
@@ -320,6 +255,12 @@ export class RiverLevelChart extends LitElement {
     const canvas = this.shadowRoot?.querySelector("#riverChartCanvas") as HTMLCanvasElement | null;
     if (canvas) {
       this.createChart(canvas);
+
+      // Push URL hash to reflect current river
+      const slug = slugify(this.displayName);
+      if (window.location.hash !== `#${slug}`) {
+        history.replaceState(null, '', `#${slug}`);
+      }
     }
   }
 
@@ -349,12 +290,7 @@ export class RiverLevelChart extends LitElement {
     const latestLevel = this.levels[this.levels.length - 1];
 
     const bandAnnotations = getBandAnnotations(low, high, CHART_COLORS.bands);
-    const lineAnnotations = getLineAnnotations(
-      low,
-      high,
-      CHART_COLORS.lines,
-      CHART_COLORS.text.annotationLabelOnDarkBg
-    );
+    const lineAnnotations = getLineAnnotations(low, high, CHART_COLORS.lines, CHART_COLORS.text.annotationLabelOnDarkBg);
 
     return {
       type: "line",
@@ -391,12 +327,8 @@ export class RiverLevelChart extends LitElement {
           legend: { display: false },
           subtitle: {
             display: !!latestLevel,
-            text: latestLevel
-              ? `Current Level: ${latestLevel.value} ${latestLevel.unitCode}`
-              : "",
-            color: latestLevel
-              ? getCurrentLevelLabelColor(latestLevel.value, low, high, CHART_COLORS.text)
-              : CHART_COLORS.text.subtitleDefault,
+            text: latestLevel ? `Current Level: ${latestLevel.value} ${latestLevel.unitCode}` : "",
+            color: latestLevel ? getCurrentLevelLabelColor(latestLevel.value, low, high, CHART_COLORS.text) : CHART_COLORS.text.subtitleDefault,
             font: { size: 14, weight: "bold" },
             padding: { top: 0, bottom: 10 },
           },
@@ -430,10 +362,7 @@ export class RiverLevelChart extends LitElement {
   private initializeIntersectionObserver(): void {
     if (this.intersectionObserver) return;
 
-    this.intersectionObserver = new IntersectionObserver(
-      this.handleIntersection.bind(this),
-      INTERSECTION_OBSERVER_CONFIG
-    );
+    this.intersectionObserver = new IntersectionObserver(this.handleIntersection.bind(this), INTERSECTION_OBSERVER_CONFIG);
   }
 
   private cleanupCurrentObservation(): void {
@@ -450,13 +379,7 @@ export class RiverLevelChart extends LitElement {
       const targetElement = entry.target as HTMLElement;
       const targetId = targetElement.id;
 
-      const shouldUpdateHash =
-        targetId &&
-        targetId === this.currentObservedId &&
-        !this.isLoading &&
-        window.location.hash !== `#${targetId}`;
-
-      if (shouldUpdateHash) {
+      if (targetId && targetId === this.currentObservedId && !this.isLoading && window.location.hash !== `#${targetId}`) {
         history.replaceState(null, '', `#${targetId}`);
       }
     });
@@ -494,35 +417,20 @@ export class RiverLevelChart extends LitElement {
   private renderRiverDetails() {
     if (!this.riverDetail) return html`<p>River details not available.</p>`;
 
-    const {
-      americanWhitewaterLink,
-      lowAdvisedCFS,
-      highAdvisedCFS,
-      comments,
-      gaugeSource,
-      localWeatherNOAA
-    } = this.riverDetail;
+    const { americanWhitewaterLink, lowAdvisedCFS, highAdvisedCFS, comments, gaugeSource, localWeatherNOAA } = this.riverDetail;
 
     return html`
       <div class="details">
         ${americanWhitewaterLink ? html`
-          <p>
-            <a href="${americanWhitewaterLink}" target="_blank">
-              American Whitewater Details
-            </a>
-          </p>
+          <p><a href="${americanWhitewaterLink}" target="_blank">American Whitewater Details</a></p>
         ` : ""}
-
         <p><strong>Advised Flow (CFS):</strong> Low: ${lowAdvisedCFS ?? "N/A"} - High: ${highAdvisedCFS ?? "N/A"}</p>
-
         ${comments ? html`
           <p><strong>Comments:</strong> ${unsafeHTML(linkify(comments))}</p>
         ` : ""}
-
         ${gaugeSource ? html`
           <p><strong>Gauge Source:</strong> <a href="${gaugeSource}" target="_blank">Link</a></p>
         ` : ""}
-
         ${localWeatherNOAA ? html`
           <p><strong>NOAA Weather:</strong> <a href="${localWeatherNOAA}" target="_blank">Link</a></p>
         ` : ""}
@@ -533,18 +441,9 @@ export class RiverLevelChart extends LitElement {
   private renderChartContainer() {
     const name = this.displayName;
 
-    if (this.isLoading) {
-      return html`<div class="loading">Loading level data for ${name}...</div>`;
-    }
-
-    if (this.error) {
-      return html`<div class="error">Error loading level data: ${this.error}</div>`;
-    }
-
-    if (this.hasData) {
-      return html`<canvas id="riverChartCanvas"></canvas>`;
-    }
-
+    if (this.isLoading) return html`<div class="loading">Loading level data for ${name}...</div>`;
+    if (this.error) return html`<div class="error">Error loading level data: ${this.error}</div>`;
+    if (this.hasData) return html`<canvas id="riverChartCanvas"></canvas>`;
     return html`<div class="no-data">No river gauge data available for ${name}.</div>`;
   }
 
