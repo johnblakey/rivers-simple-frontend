@@ -336,9 +336,7 @@ export class RiverLevelChart extends LitElement {
           <div class="error">Error: ${this.error}</div>
         ` : this.levels.length ? html`
           <canvas></canvas>
-        ` : html`
-          <div class="no-data">No data available</div>
-        `}
+        ` : null}
       </div>
     `;
   }
