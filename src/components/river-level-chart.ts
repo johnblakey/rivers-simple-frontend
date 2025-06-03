@@ -5,36 +5,10 @@ import AnnotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotat
 import "chartjs-adapter-date-fns";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { getRiverLevelsBySiteCode, type RiverLevel, type RiverDetail } from "../utility/data";
+import { slugify } from "../utility/string-utils";
 
 Chart.register(...registerables, AnnotationPlugin);
-
-const CHART_COLORS = {
-  bands: {
-    belowLow: "rgba(255, 99, 132, 0.2)",
-    optimal: "rgba(76, 175, 80, 0.2)",
-    aboveHigh: "rgba(54, 162, 235, 0.2)",
-  },
-  lines: {
-    low: "rgba(200, 0, 0, 0.9)",
-    high: "rgba(0, 0, 200, 0.9)",
-  },
-  text: {
-    subtitleDefault: "rgba(0, 0, 0, 0.87)",
-    subtitleLow: "rgb(211, 47, 47)",
-    subtitleOptimal: "rgb(56, 142, 60)",
-    subtitleHigh: "rgb(25, 118, 210)",
-  },
-};
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
-}
+import { CHART_COLORS } from "../utility/chart-colors";
 
 function linkify(text: string): string {
   const urlRegex = /(https?:\/\/[^\s]+)/g;

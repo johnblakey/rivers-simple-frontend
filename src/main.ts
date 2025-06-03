@@ -1,6 +1,7 @@
 import { getRiverDetails } from './utility/data';
 import type { RiverDetail } from './utility/data';
 import { RiverLevelChart } from './components/river-level-chart';
+import { slugify } from './utility/string-utils';
 
 console.info("Welcome to the rivers.johnblakey.org. Email me at johnblakeyorg@gmail.com if you find any bugs, security issues, or have feedback. Blunt tone welcome.");
 
@@ -8,16 +9,6 @@ let currentSortOrder: 'alphabetical' | 'runnable' = 'alphabetical';
 let allRiverDetails: RiverDetail[] = [];
 let chartsContainer: HTMLDivElement | null = null;
 let sortButton: HTMLButtonElement | null = null;
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
-}
 
 async function initializeApp() {
   const appHost = document.getElementById('charts-host');

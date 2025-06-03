@@ -93,7 +93,7 @@
 
     <script type="module" src="/src/about.ts"></script>
     <script>
-      fetch('/footer.html') // Fetches from the root directory
+      fetch('/footer.html')
         .then(response => response.ok ? response.text() : Promise.reject('Footer not found'))
         .then(data => {
           document.getElementById('footer-placeholder').innerHTML = data;
