@@ -9,12 +9,12 @@ body {
 }
 
 main {
-  max-width: 1200px; /* Max width for content */
-  margin: 20px auto; /* Center main content with some top/bottom margin */
-  padding: 20px;
-  background-color: #fff; /* White background for the content area */
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-  border-radius: 8px; /* Rounded corners */
+  max-width: 1200px;
+  margin: 10px auto;    /* Reduced top/bottom margin */
+  padding: 12px 16px;   /* Reduced padding */
+  background-color: #fff;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
 }
 
 h1, h2 {
@@ -24,21 +24,22 @@ h1, h2 {
 
 h1 {
   text-align: center;
-  margin-bottom: 30px;
-  font-size: 2.5em;
+  margin-bottom: 18px;  /* Less space below the title */
+  font-size: 2.2em;     /* Slightly smaller */
+  margin-top: 0;
 }
 
 h2 {
-  border-bottom: 2px solid #e0e0e0; /* Light border under H2 */
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-  font-size: 1.8em;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 6px;  /* Less padding */
+  margin-bottom: 12px;  /* Less margin */
+  font-size: 1.5em;     /* Slightly smaller */
 }
 
 #charts-host {
   display: flex;
   flex-direction: column;
-  gap: 24px; /* Space between river chart components */
+  gap: 16px; /* Less space between river chart components */
 }
 
 /* Navigation Bar */
@@ -53,12 +54,16 @@ h2 {
 }
 
 .main-nav a {
-  color: #ffffff; /* White text for links */
+  color: #ffffff;
   text-decoration: none;
-  padding: 10px 15px; /* Padding for clickable area */
+  padding: 10px 15px;
   border-radius: 4px;
   transition: background-color 0.3s ease;
-  font-size: 1em; /* Base font size for nav links */
+  font-size: 1em;
+  font-weight: bold; /* Make all nav links bold for consistency */
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .main-nav a:hover,
@@ -100,9 +105,9 @@ h2 {
 footer {
   background: #34495e;
   color: #fff;
-  padding: 20px 0 16px 0; /* Match top/bottom spacing to main content */
-  margin-top: 20px;        /* Match main's top margin */
-  border-radius: 0;        /* Remove rounded corners */
+  padding: 12px 0 10px 0; /* Reduced vertical padding */
+  margin-top: 10px;        /* Less space above footer */
+  border-radius: 0;
   box-shadow: 0 -2px 12px rgba(44, 62, 80, 0.08);
   font-size: 1.05em;
 }
