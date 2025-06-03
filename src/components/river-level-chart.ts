@@ -153,10 +153,16 @@ export class RiverLevelChart extends LitElement {
       border: 1px solid #ccc;
       border-radius: 8px;
       max-width: 800px;
+      transition: background-color 0.3s ease;
+    }
+
+    :host(:hover) {
+      background-color: #f5f5f5;
     }
 
     .river-info-container h2 {
       margin-top: 0;
+      cursor: pointer;
     }
 
     .details {
@@ -210,12 +216,10 @@ export class RiverLevelChart extends LitElement {
 
   protected firstUpdated() {
     const slug = slugify(this.displayName);
-    if (window.location.hash === `#${slug}`) {
+    const target = this.shadowRoot?.getElementById(slug);
+    if (window.location.hash === `#${slug}` && target) {
       setTimeout(() => {
-        const target = this.shadowRoot?.getElementById(slug);
-        if (target) {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 0);
     }
   }
@@ -255,11 +259,9 @@ export class RiverLevelChart extends LitElement {
     const canvas = this.shadowRoot?.querySelector("#riverChartCanvas") as HTMLCanvasElement | null;
     if (canvas) {
       this.createChart(canvas);
-
-      // Push URL hash to reflect current river
       const slug = slugify(this.displayName);
       if (window.location.hash !== `#${slug}`) {
-        history.replaceState(null, '', `#${slug}`);
+        history.replaceState(null, "", `#${slug}`);
       }
     }
   }
@@ -342,7 +344,7 @@ export class RiverLevelChart extends LitElement {
 
   private updateIntersectionObserver(): void {
     const nameForId = this.riverDetail?.siteName || this.siteCode || "Loading River Data...";
-    const expectedId = nameForId ? slugify(nameForId) : "";
+    const expectedId = slugify(nameForId);
 
     if (this.currentObservedId === expectedId && this.observedElement) return;
 
@@ -351,7 +353,7 @@ export class RiverLevelChart extends LitElement {
 
     if (!expectedId) return;
 
-    const containerElement = this.shadowRoot?.querySelector(`#${expectedId}`) as HTMLElement | null;
+    const containerElement = this.shadowRoot?.getElementById(expectedId) as HTMLElement | null;
     if (!containerElement) return;
 
     this.initializeIntersectionObserver();
@@ -361,7 +363,6 @@ export class RiverLevelChart extends LitElement {
 
   private initializeIntersectionObserver(): void {
     if (this.intersectionObserver) return;
-
     this.intersectionObserver = new IntersectionObserver(this.handleIntersection.bind(this), INTERSECTION_OBSERVER_CONFIG);
   }
 
@@ -373,16 +374,13 @@ export class RiverLevelChart extends LitElement {
   }
 
   private handleIntersection(entries: IntersectionObserverEntry[]): void {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-
-      const targetElement = entry.target as HTMLElement;
-      const targetId = targetElement.id;
-
-      if (targetId && targetId === this.currentObservedId && !this.isLoading && window.location.hash !== `#${targetId}`) {
-        history.replaceState(null, '', `#${targetId}`);
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const targetId = (entry.target as HTMLElement).id;
+      if (targetId === this.currentObservedId && !this.isLoading && window.location.hash !== `#${targetId}`) {
+        history.replaceState(null, "", `#${targetId}`);
       }
-    });
+    }
   }
 
   private clearChartAndData(): void {
@@ -414,6 +412,15 @@ export class RiverLevelChart extends LitElement {
     return this.riverDetail?.siteName || this.siteCode || "Loading River Data...";
   }
 
+  private handleHover() {
+    const slug = slugify(this.displayName);
+    history.replaceState(null, "", `#${slug}`);
+  }
+
+  private handleClick() {
+    this.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   private renderRiverDetails() {
     if (!this.riverDetail) return html`<p>River details not available.</p>`;
 
@@ -440,7 +447,6 @@ export class RiverLevelChart extends LitElement {
 
   private renderChartContainer() {
     const name = this.displayName;
-
     if (this.isLoading) return html`<div class="loading">Loading level data for ${name}...</div>`;
     if (this.error) return html`<div class="error">Error loading level data: ${this.error}</div>`;
     if (this.hasData) return html`<canvas id="riverChartCanvas"></canvas>`;
@@ -448,11 +454,16 @@ export class RiverLevelChart extends LitElement {
   }
 
   render() {
-    const name = this.displayName;
+    const slug = slugify(this.displayName);
 
     return html`
-      <div class="river-info-container" id="${slugify(name)}">
-        <h2>${name}</h2>
+      <div
+        class="river-info-container"
+        id="${slug}"
+        @mouseenter=${this.handleHover}
+        @click=${this.handleClick}
+      >
+        <h2>${this.displayName}</h2>
         ${this.renderRiverDetails()}
         <div class="chart-status-container">
           ${this.renderChartContainer()}
