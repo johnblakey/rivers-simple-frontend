@@ -194,15 +194,17 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 
 ## TODO
 
-- Bug fix: fix Lit graph x-axis formatting issue - only shows time
+- ~~Bug fix: fix Lit graph x-axis formatting issue - only shows time~~
+- ~~Change structure of html and typescirpt to allow links to particular dashboards (url#river_name)~~
+- ~~Add Terms of Use page, create a separate page~~
+- ~~Delete riverdetails gaugeName properties, (workaround need now removed)~~
 - Create Dockerfile
 - Create tailwind css
-- Change structure of html and typescirpt to allow links to particular dashboards (url#river_name)
-- Add Terms of Use page, create a separate page
+- Create simplified slug code for main and river-level-chart.ts
 
 ### Production
 
 - TODO - Put Lit in production mode
 - Verify if any other technology needs to be in production mode
 - Verify that Cloud Run backend deployment is set to production env after frontend deployment
-- Delete riverdetails gaugeName properties, (workaround need now removed)
+-
