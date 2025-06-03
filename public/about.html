@@ -89,21 +89,16 @@
         <p class="about-description">Thank you for visiting River Levels.</p>
       </div>
     </main>
-    <footer>
-      <div class="footer-content">
-        <a href="https://waterservices.usgs.gov/" target="_blank" rel="noopener noreferrer" class="footer-link usgs-link">
-          <img src="/river-level-logo-tiny.png" alt="River Level Logo" class="footer-logo" />
-          United States Geological Survey (USGS.gov) Powered.
-        </a>
-        <p class="feedback-email">Questions? Email me at <a href="mailto:johnblakeyorg@gmail.com">johnblakeyorg@gmail.com</a></p>
-      </div>
-      <div class="footer-bottom-nav">
-        <a href="/">Home</a> | <a href="/about.html">About</a> | &copy; <span id="footer-year"></span> Rivers Project
-      </div>
-    </footer>
-    <script>
-      document.getElementById('footer-year').textContent = new Date().getFullYear();
-    </script>
+    <div id="footer-placeholder"></div>
+
     <script type="module" src="/src/about.ts"></script>
+    <script>
+      fetch('/footer.html') // Fetches from the root directory
+        .then(response => response.ok ? response.text() : Promise.reject('Footer not found'))
+        .then(data => {
+          document.getElementById('footer-placeholder').innerHTML = data;
+        })
+        .catch(error => console.error('Error loading footer:', error));
+    </script>
   </body>
 </html>
