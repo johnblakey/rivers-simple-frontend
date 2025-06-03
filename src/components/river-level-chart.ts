@@ -1,25 +1,10 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import {
-  Chart,
-  registerables,
-  type ChartConfiguration,
-  type ChartData,
-} from "chart.js/auto";
+import { Chart, registerables, type ChartConfiguration, type ChartData } from "chart.js/auto";
 import AnnotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotation";
 import "chartjs-adapter-date-fns";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-
-import {
-  getRiverLevelsBySiteCode,
-  type RiverLevel,
-  type RiverDetail,
-} from "../utility/data";
-
-function linkify(text: string): string {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-}
+import { getRiverLevelsBySiteCode, type RiverLevel, type RiverDetail } from "../utility/data";
 
 Chart.register(...registerables, AnnotationPlugin);
 
@@ -34,17 +19,11 @@ const CHART_COLORS = {
     high: "rgba(0, 0, 200, 0.9)",
   },
   text: {
-    annotationLabelOnDarkBg: "white",
     subtitleDefault: "rgba(0, 0, 0, 0.87)",
     subtitleLow: "rgb(211, 47, 47)",
     subtitleOptimal: "rgb(56, 142, 60)",
     subtitleHigh: "rgb(25, 118, 210)",
   },
-};
-
-const INTERSECTION_OBSERVER_CONFIG = {
-  root: null,
-  threshold: 0.5,
 };
 
 function slugify(text: string): string {
@@ -57,76 +36,16 @@ function slugify(text: string): string {
     .replace(/-+$/, "");
 }
 
-function getBandAnnotations(low: number | undefined, high: number | undefined, colors: typeof CHART_COLORS.bands): AnnotationOptions[] {
-  const common = {
-    borderColor: "transparent",
-    borderWidth: 0,
-    drawTime: "beforeDatasetsDraw" as const,
-  };
-
-  const bands: AnnotationOptions[] = [];
-
-  if (typeof low === "number") {
-    bands.push({ type: "box", yMax: low, backgroundColor: colors.belowLow, ...common });
-  }
-
-  if (typeof low === "number" && typeof high === "number" && low < high) {
-    bands.push({ type: "box", yMin: low, yMax: high, backgroundColor: colors.optimal, ...common });
-  } else if (typeof low === "number") {
-    bands.push({ type: "box", yMin: low, backgroundColor: colors.optimal, ...common });
-  } else if (typeof high === "number") {
-    bands.push({ type: "box", yMax: high, backgroundColor: colors.optimal, ...common });
-  }
-
-  if (typeof high === "number") {
-    bands.push({ type: "box", yMin: high, backgroundColor: colors.aboveHigh, ...common });
-  }
-
-  return bands;
+function linkify(text: string): string {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
-function getLineAnnotations(low: number | undefined, high: number | undefined, lines: typeof CHART_COLORS.lines, labelColor: string): AnnotationOptions[] {
-  const commonLine = { borderWidth: 1.5, borderDash: [6, 6] };
-  const label = {
-    display: true,
-    position: "start" as const,
-    color: labelColor,
-    font: { size: 10 },
-    padding: 3,
-  };
-
-  const annotations: AnnotationOptions[] = [];
-
-  if (typeof low === "number") {
-    annotations.push({
-      type: "line",
-      yMin: low,
-      yMax: low,
-      borderColor: lines.low,
-      ...commonLine,
-      label: { ...label, content: `Low: ${low}`, backgroundColor: lines.low },
-    });
-  }
-
-  if (typeof high === "number") {
-    annotations.push({
-      type: "line",
-      yMin: high,
-      yMax: high,
-      borderColor: lines.high,
-      ...commonLine,
-      label: { ...label, content: `High: ${high}`, backgroundColor: lines.high },
-    });
-  }
-
-  return annotations;
-}
-
-function getCurrentLevelLabelColor(value: number, low: number | undefined, high: number | undefined, colors: typeof CHART_COLORS.text): string {
-  if (typeof low === "number" && value < low) return colors.subtitleLow;
-  if (typeof low === "number" && typeof high === "number" && value >= low && value <= high) return colors.subtitleOptimal;
-  if (typeof high === "number" && value > high) return colors.subtitleHigh;
-  return colors.subtitleDefault;
+function getCurrentLevelColor(value: number, low: number | undefined, high: number | undefined): string {
+  if (typeof low === "number" && value < low) return CHART_COLORS.text.subtitleLow;
+  if (typeof low === "number" && typeof high === "number" && value >= low && value <= high) return CHART_COLORS.text.subtitleOptimal;
+  if (typeof high === "number" && value > high) return CHART_COLORS.text.subtitleHigh;
+  return CHART_COLORS.text.subtitleDefault;
 }
 
 @customElement("river-level-chart")
@@ -137,15 +56,10 @@ export class RiverLevelChart extends LitElement {
   @state() private levels: RiverLevel[] = [];
   @state() private isLoading = false;
   @state() private error: string | null = null;
-  @state() private hasData = false;
-  @state() private shouldScrollIntoView = false;
-  @state() private latestLevelValue: number | null = null;
+  @state() private latestValue: number | null = null;
 
-  private chartInstance: Chart | null = null;
-  private isFetchingInProgress = false;
-  private intersectionObserver: IntersectionObserver | null = null;
-  private observedElement: HTMLElement | null = null;
-  private currentObservedId = "";
+  private chart: Chart | null = null;
+  private static cache: Record<string, RiverLevel[]> = {};
 
   static styles = css`
     :host {
@@ -157,214 +71,149 @@ export class RiverLevelChart extends LitElement {
       max-width: 800px;
       transition: background-color 0.3s ease;
     }
-
     :host(:hover) {
       background-color: #f5f5f5;
     }
-
-    .river-info-container h2 {
+    h2 {
       margin-top: 0;
       cursor: pointer;
     }
-
     .details {
       margin-bottom: 16px;
       padding-bottom: 16px;
       border-bottom: 1px solid #eee;
     }
-
     .details p {
       margin: 4px 0;
       font-size: 0.9em;
     }
-
-    .details strong {
-      color: #333;
-    }
-
     canvas {
       max-width: 100%;
       height: auto;
     }
-
-    .loading,
-    .error,
-    .no-data {
+    .loading, .error, .no-data {
       padding: 20px;
       text-align: center;
     }
-
     .no-data {
       color: #757575;
       font-style: italic;
     }
   `;
 
-  protected willUpdate(changed: Map<string | number | symbol, unknown>) {
-    if (changed.has("siteCode") || changed.has("riverDetail")) {
-      if (this.siteCode && this.riverDetail) {
-        const slug = slugify(this.displayName);
-        if (window.location.hash === `#${slug}`) {
-          this.shouldScrollIntoView = true;
-        }
-        this.fetchData();
-      } else {
-        this.clearChartAndData();
-      }
+  protected async willUpdate(changed: Map<string | number | symbol, unknown>) {
+    if ((changed.has("siteCode") || changed.has("riverDetail")) && this.siteCode && this.riverDetail) {
+      await this.fetchData();
     }
   }
 
   protected updated() {
-    this.renderChartIfReady();
-    this.updateIntersectionObserver();
-
-    if (this.shouldScrollIntoView && this.hasData && !this.isLoading) {
-      const slug = slugify(this.displayName);
-      const target = this.shadowRoot?.getElementById(slug);
-
-      // We attempt to scroll if the target exists.
-      // We reset `shouldScrollIntoView` if:
-      // 1. The target exists (regardless of whether scroll happened or was needed).
-      // 2. The target doesn't exist, but the slug was valid (not "loading..."),
-      //    implying we expected it but it wasn't rendered (e.g. error/no data state).
-      let shouldResetFlag = false;
-
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-        shouldResetFlag = true;
-      } else {
-        // If target is not found, but the slug is not the "loading" slug,
-        // it means displayName was resolved, but the element itself might not be rendered
-        // (e.g. due to error or no data). In this case, we should still reset the flag.
-        if (slug && slug !== slugify("Loading River Data...")) {
-          shouldResetFlag = true;
-        }
-      }
-
-      if (shouldResetFlag) {
-        // Defer this state change to prevent the "update after update" warning.
-        Promise.resolve().then(() => {
-          this.shouldScrollIntoView = false;
-        });
-      }
-    }
+    this.renderChart();
   }
-
-  private static levelsCache: Record<string, RiverLevel[]> = {};
-
-  private async fetchData(): Promise<void> {
-    if (!this.siteCode || !this.riverDetail || this.isFetchingInProgress) return;
-
-    this.isFetchingInProgress = true;
-    this.isLoading = true;
-    this.error = null;
-    this.hasData = false;
-    this.cleanupChart();
-
-    try {
-      if (RiverLevelChart.levelsCache[this.siteCode]) {
-        this.levels = RiverLevelChart.levelsCache[this.siteCode];
-      } else {
-        const levels = await getRiverLevelsBySiteCode(this.siteCode);
-        RiverLevelChart.levelsCache[this.siteCode] = levels;
-        this.levels = levels;
-      }
-      this.levels = this.levels.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-      this.latestLevelValue = this.levels.length > 0 ? this.levels[this.levels.length - 1].value : null;
-      this.hasData = this.levels.length > 0;
-    } catch (err) {
-      this.error = err instanceof Error ? err.message : "Failed to load river levels.";
-      this.latestLevelValue = null; // Ensure reset on error
-    } finally {
-      this.isLoading = false;
-      this.isFetchingInProgress = false;
-      this.dispatchEvent(new CustomEvent('data-updated', { bubbles: true, composed: true }));
-    }
-  }
-
-  // Removed firstUpdated() method as its scroll logic is covered by willUpdate + updated.
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.cleanupChart();
-    this.cleanupIntersectionObserver();
+    this.destroyChart();
   }
 
-  /**
-   * Provides a sort key for "runnable" status.
-   * Lower numbers indicate higher priority (more runnable).
-   * 0: Optimal/Runnable
-   * 1: Not Optimal/Runnable (but criteria were clear, e.g., too low/high)
-   * 2: Runnability criteria unclear or invalid (e.g., lowAdvised > highAdvised, or no advised levels)
-   * 3: RiverDetail object missing (cannot determine advised CFS)
-   * 4: Chart data is currently loading
-   * 5: No chart data available
-   */
+  public get displayName(): string {
+    return this.riverDetail?.siteName || this.siteCode || "Loading...";
+  }
+
   public get sortKeyRunnable(): number {
     if (this.isLoading) return 4;
-    if (!this.hasData || this.latestLevelValue === null) return 5;
+    if (!this.levels.length || this.latestValue === null) return 5;
     if (!this.riverDetail) return 3;
 
-    const value = this.latestLevelValue;
     const { lowAdvisedCFS: low, highAdvisedCFS: high } = this.riverDetail;
+    const value = this.latestValue;
+
+    // Check if we have valid range criteria
     const lowIsNum = typeof low === 'number';
     const highIsNum = typeof high === 'number';
 
-    if (lowIsNum && highIsNum && low < high) { // Standard range
-      if (value >= low && value <= high) return 0; // Optimal
-    } else if (lowIsNum && !highIsNum) { // Only low defined
-      if (value >= low) return 0; // Optimal
-    } else if (!lowIsNum && highIsNum) { // Only high defined
-      if (value <= high) return 0; // Optimal
-    } else if (lowIsNum && highIsNum && low === high) { // Exact point
-      if (value === low) return 0; // Optimal
-    } else if (lowIsNum && highIsNum && low > high) {
-      return 2; // Invalid range
+    if (lowIsNum && highIsNum && low < high) {
+      // Standard range: low < high
+      return (value >= low && value <= high) ? 0 : 1;
+    } else if (lowIsNum && !highIsNum) {
+      // Only low threshold
+      return value >= low ? 0 : 1;
+    } else if (!lowIsNum && highIsNum) {
+      // Only high threshold
+      return value <= high ? 0 : 1;
+    } else if (lowIsNum && highIsNum && low === high) {
+      // Exact point
+      return value === low ? 0 : 1;
     }
 
-    if ((lowIsNum && highIsNum && low < high) || (lowIsNum && !highIsNum) || (!lowIsNum && highIsNum) || (lowIsNum && highIsNum && low === high)) {
-      return 1; // Not optimal, but criteria existed
+    return 2; // Invalid or unclear criteria
+  }
+
+  private async fetchData(): Promise<void> {
+    if (!this.siteCode) return;
+
+    this.isLoading = true;
+    this.error = null;
+
+    try {
+      // Use cache if available
+      if (RiverLevelChart.cache[this.siteCode]) {
+        this.levels = RiverLevelChart.cache[this.siteCode];
+      } else {
+        const levels = await getRiverLevelsBySiteCode(this.siteCode);
+        this.levels = levels.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        RiverLevelChart.cache[this.siteCode] = this.levels;
+      }
+
+      this.latestValue = this.levels.length > 0 ? this.levels[this.levels.length - 1].value : null;
+    } catch (err) {
+      this.error = err instanceof Error ? err.message : "Failed to load data";
+      this.latestValue = null;
+    } finally {
+      this.isLoading = false;
     }
-    return 2; // Runnability criteria unclear/invalid
   }
 
-  private renderChartIfReady(): void {
-    if (this.isLoading || this.error || !this.hasData || this.chartInstance) return;
-
-    const canvas = this.shadowRoot?.querySelector("#riverChartCanvas") as HTMLCanvasElement | null;
-    if (canvas) {
-      this.createChart(canvas);
-      // No hash update here!
+  private renderChart(): void {
+    if (this.isLoading || this.error || !this.levels.length) {
+      this.destroyChart();
+      return;
     }
-  }
 
-  private createChart(canvas: HTMLCanvasElement): void {
-    const chartData = this.buildChartData();
-    const config = this.buildChartConfig(chartData);
-    this.chartInstance = new Chart(canvas, config);
-  }
+    const canvas = this.shadowRoot?.querySelector("canvas") as HTMLCanvasElement;
+    if (!canvas) return;
 
-  private buildChartData(): ChartData {
-    return {
-      labels: this.levels.map((l) => new Date(l.timestamp)),
-      datasets: [
-        {
+    // Always destroy existing chart before creating new one
+    this.destroyChart();
+
+    // Small delay to ensure canvas is ready after DOM operations
+    requestAnimationFrame(() => {
+      const chartData: ChartData = {
+        labels: this.levels.map(l => new Date(l.timestamp)),
+        datasets: [{
           label: `Flow (${this.levels[0]?.unitCode || "N/A"})`,
-          data: this.levels.map((l) => l.value),
+          data: this.levels.map(l => l.value),
           borderColor: "rgb(75, 192, 192)",
           tension: 0.1,
           fill: false,
-        },
-      ],
-    };
+        }],
+      };
+
+      const config = this.buildChartConfig(chartData);
+      this.chart = new Chart(canvas, config);
+    });
+  }
+
+  // Public method to rebuild chart after DOM reordering
+  public rebuildChart(): void {
+    if (this.levels.length > 0 && !this.isLoading && !this.error) {
+      this.renderChart();
+    }
   }
 
   private buildChartConfig(chartData: ChartData): ChartConfiguration {
     const { lowAdvisedCFS: low, highAdvisedCFS: high } = this.riverDetail || {};
-    const latestLevel = this.levels[this.levels.length - 1];
-
-    const bandAnnotations = getBandAnnotations(low, high, CHART_COLORS.bands);
-    const lineAnnotations = getLineAnnotations(low, high, CHART_COLORS.lines, CHART_COLORS.text.annotationLabelOnDarkBg);
+    const latest = this.levels[this.levels.length - 1];
 
     return {
       type: "line",
@@ -372,179 +221,125 @@ export class RiverLevelChart extends LitElement {
       options: {
         responsive: true,
         maintainAspectRatio: true,
-        layout: { padding: { top: 15 } },
         scales: {
           x: {
             type: "time",
             time: {
               unit: "day",
               tooltipFormat: "MMM d, yyyy HH:mm",
-              displayFormats: {
-                hour: "MMM d, HH:mm",
-                day: "MMM d",
-                minute: "HH:mm",
-                month: "MMM yyyy",
-                year: "yyyy",
-              },
             },
             title: { display: true, text: "Time" },
           },
           y: {
-            title: {
-              display: true,
-              text: `Level (${this.levels[0]?.unitCode || "N/A"})`,
-            },
+            title: { display: true, text: `Level (${latest?.unitCode || "N/A"})` },
             grace: "5%",
           },
         },
         plugins: {
           legend: { display: false },
           subtitle: {
-            display: !!latestLevel,
-            text: latestLevel ? `Current Level: ${latestLevel.value} ${latestLevel.unitCode}` : "",
-            color: latestLevel ? getCurrentLevelLabelColor(latestLevel.value, low, high, CHART_COLORS.text) : CHART_COLORS.text.subtitleDefault,
+            display: !!latest,
+            text: latest ? `Current: ${latest.value} ${latest.unitCode}` : "",
+            color: latest ? getCurrentLevelColor(latest.value, low, high) : CHART_COLORS.text.subtitleDefault,
             font: { size: 14, weight: "bold" },
-            padding: { top: 0, bottom: 10 },
+            padding: { bottom: 10 },
           },
           annotation: {
-            annotations: [...bandAnnotations, ...lineAnnotations],
+            annotations: this.buildAnnotations(low, high),
           },
         },
       },
     };
   }
 
-  private updateIntersectionObserver(): void {
-    const nameForId = this.riverDetail?.siteName || this.siteCode || "Loading River Data...";
-    const expectedId = slugify(nameForId);
+  private buildAnnotations(low: number | undefined, high: number | undefined): AnnotationOptions[] {
+    const annotations: AnnotationOptions[] = [];
+    const common = { borderWidth: 0, drawTime: "beforeDatasetsDraw" as const };
 
-    if (this.currentObservedId === expectedId && this.observedElement) return;
-
-    this.cleanupCurrentObservation();
-    this.currentObservedId = expectedId;
-
-    if (!expectedId) return;
-
-    const containerElement = this.shadowRoot?.getElementById(expectedId) as HTMLElement | null;
-    if (!containerElement) return;
-
-    this.initializeIntersectionObserver();
-    this.intersectionObserver?.observe(containerElement);
-    this.observedElement = containerElement;
-  }
-
-  private initializeIntersectionObserver(): void {
-    if (this.intersectionObserver) return;
-    this.intersectionObserver = new IntersectionObserver(this.handleIntersection.bind(this), INTERSECTION_OBSERVER_CONFIG);
-  }
-
-  private cleanupCurrentObservation(): void {
-    if (this.intersectionObserver && this.observedElement) {
-      this.intersectionObserver.unobserve(this.observedElement);
-      this.observedElement = null;
+    // Background bands
+    if (typeof low === "number") {
+      annotations.push({ type: "box", yMax: low, backgroundColor: CHART_COLORS.bands.belowLow, ...common });
     }
-  }
 
-  private clearChartAndData(): void {
-    this.cleanupChart();
-    this.levels = [];
-    this.hasData = false;
-    this.error = null;
-    this.latestLevelValue = null;
-    this.isLoading = false;
-  }
-
-  private cleanupChart(): void {
-    this.chartInstance?.destroy();
-    this.chartInstance = null;
-  }
-
-  private cleanupIntersectionObserver(): void {
-    if (this.intersectionObserver) {
-      if (this.observedElement) {
-        this.intersectionObserver.unobserve(this.observedElement);
-      }
-      this.intersectionObserver.disconnect();
-      this.intersectionObserver = null;
+    if (typeof low === "number" && typeof high === "number" && low < high) {
+      annotations.push({ type: "box", yMin: low, yMax: high, backgroundColor: CHART_COLORS.bands.optimal, ...common });
+    } else if (typeof low === "number") {
+      annotations.push({ type: "box", yMin: low, backgroundColor: CHART_COLORS.bands.optimal, ...common });
+    } else if (typeof high === "number") {
+      annotations.push({ type: "box", yMax: high, backgroundColor: CHART_COLORS.bands.optimal, ...common });
     }
-    this.observedElement = null;
-    this.currentObservedId = "";
+
+    if (typeof high === "number") {
+      annotations.push({ type: "box", yMin: high, backgroundColor: CHART_COLORS.bands.aboveHigh, ...common });
+    }
+
+    // Threshold lines
+    const lineCommon = { borderWidth: 1.5, borderDash: [6, 6] };
+    const label = { display: true, position: "start" as const, color: "white", font: { size: 10 }, padding: 3 };
+
+    if (typeof low === "number") {
+      annotations.push({
+        type: "line", yMin: low, yMax: low, borderColor: CHART_COLORS.lines.low, ...lineCommon,
+        label: { ...label, content: `Low: ${low}`, backgroundColor: CHART_COLORS.lines.low },
+      });
+    }
+
+    if (typeof high === "number") {
+      annotations.push({
+        type: "line", yMin: high, yMax: high, borderColor: CHART_COLORS.lines.high, ...lineCommon,
+        label: { ...label, content: `High: ${high}`, backgroundColor: CHART_COLORS.lines.high },
+      });
+    }
+
+    return annotations;
   }
 
-  /**
-   * Called externally before the component is moved in the DOM.
-   * Ensures the existing chart is cleaned up so it can be recreated.
-   */
-  public prepareForMove(): void {
-    this.cleanupChart();
+  private destroyChart(): void {
+    this.chart?.destroy();
+    this.chart = null;
   }
 
-  public get displayName(): string {
-    return this.riverDetail?.siteName || this.siteCode || "Loading River Data...";
-  }
-
-  private handleClick() {
+  private handleClick(): void {
     const slug = slugify(this.displayName);
     history.replaceState(null, "", `#${slug}`);
     this.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  private renderRiverDetails() {
-    if (!this.riverDetail) return html`<p>River details not available.</p>`;
-
-    const { americanWhitewaterLink, lowAdvisedCFS, highAdvisedCFS, comments, gaugeSource, localWeatherNOAA } = this.riverDetail;
-
-    return html`
-      <div class="details">
-        ${americanWhitewaterLink ? html`
-          <p><a href="${americanWhitewaterLink}" target="_blank">American Whitewater Details</a></p>
-        ` : ""}
-        <p><strong>Advised Flow (CFS):</strong> Low: ${lowAdvisedCFS ?? "N/A"} - High: ${highAdvisedCFS ?? "N/A"}</p>
-        ${comments ? html`
-          <p><strong>Comments:</strong> ${unsafeHTML(linkify(comments))}</p>
-        ` : ""}
-        ${gaugeSource ? html`
-          <p><strong>Gauge Source:</strong> <a href="${gaugeSource}" target="_blank">Link</a></p>
-        ` : ""}
-        ${localWeatherNOAA ? html`
-          <p><strong>NOAA Weather:</strong> <a href="${localWeatherNOAA}" target="_blank">Link</a></p>
-        ` : ""}
-      </div>
-    `;
-  }
-
-  private renderChartContainer() {
-    const name = this.displayName;
-    if (this.isLoading) return html`<div class="loading">Loading level data for ${name}...</div>`;
-    if (this.error) return html`<div class="error">Error loading level data: ${this.error}</div>`;
-    if (this.hasData) return html`<canvas id="riverChartCanvas"></canvas>`;
-    return html`<div class="no-data">No river gauge data available for ${name}.</div>`;
   }
 
   render() {
     const slug = slugify(this.displayName);
 
     return html`
-      <div
-        class="river-info-container"
-        id="${slug}"
-        @click=${this.handleClick}
-        style="cursor: pointer;"
-        tabindex="0"
-        role="button"
-        aria-label="Show details for ${this.displayName}"
-      >
+      <div id="${slug}" @click=${this.handleClick} style="cursor: pointer;" tabindex="0">
         <h2>${this.displayName}</h2>
-        ${this.renderRiverDetails()}
-        <div class="chart-status-container">
-          ${this.renderChartContainer()}
-        </div>
+
+        ${this.riverDetail ? html`
+          <div class="details">
+            ${this.riverDetail.americanWhitewaterLink ? html`
+              <p><a href="${this.riverDetail.americanWhitewaterLink}" target="_blank">American Whitewater</a></p>
+            ` : ""}
+            <p><strong>Advised Flow:</strong> ${this.riverDetail.lowAdvisedCFS ?? "N/A"} - ${this.riverDetail.highAdvisedCFS ?? "N/A"} CFS</p>
+            ${this.riverDetail.comments ? html`
+              <p><strong>Comments:</strong> ${unsafeHTML(linkify(this.riverDetail.comments))}</p>
+            ` : ""}
+            ${this.riverDetail.gaugeSource ? html`
+              <p><strong>Gauge:</strong> <a href="${this.riverDetail.gaugeSource}" target="_blank">Link</a></p>
+            ` : ""}
+            ${this.riverDetail.localWeatherNOAA ? html`
+              <p><strong>Weather:</strong> <a href="${this.riverDetail.localWeatherNOAA}" target="_blank">NOAA</a></p>
+            ` : ""}
+          </div>
+        ` : ""}
+
+        ${this.isLoading ? html`
+          <div class="loading">Loading data...</div>
+        ` : this.error ? html`
+          <div class="error">Error: ${this.error}</div>
+        ` : this.levels.length ? html`
+          <canvas></canvas>
+        ` : html`
+          <div class="no-data">No data available</div>
+        `}
       </div>
     `;
-  }
-
-  private handleIntersection(_entries: IntersectionObserverEntry[]) {
-    // You can implement logic here if you want to react to visibility changes.
-    // For now, this can be left empty or used for debugging.
   }
 }

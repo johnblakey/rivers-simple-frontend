@@ -1,21 +1,14 @@
 import { getRiverDetails } from './utility/data';
 import type { RiverDetail } from './utility/data';
-import { RiverLevelChart } from './components/river-level-chart'; // Import the component
+import { RiverLevelChart } from './components/river-level-chart';
 
-console.info(
-  "Welcome to the rivers.johnblakey.org. Email me at johnblakeyorg@gmail.com if you find any bugs, security issues, or have feedback. Blunt tone welcome."
-);
+console.info("Welcome to the rivers.johnblakey.org. Email me at johnblakeyorg@gmail.com if you find any bugs, security issues, or have feedback. Blunt tone welcome.");
 
 let currentSortOrder: 'alphabetical' | 'runnable' = 'alphabetical';
-// RiverDetail type is now imported from './utility/data'
+let allRiverDetails: RiverDetail[] = [];
+let chartsContainer: HTMLDivElement | null = null;
+let sortButton: HTMLButtonElement | null = null;
 
-let allRiverDetails: RiverDetail[] = []; // To store the initial fetch
-const appHost = document.getElementById('charts-host');
-let chartsContainer: HTMLDivElement | null = null; // Will hold the chart elements
-let sortToggleButton: HTMLButtonElement | null = null;
-let debounceTimer: number;
-
-// Utility function (can be moved to a shared utility file)
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -27,78 +20,65 @@ function slugify(text: string): string {
 }
 
 async function initializeApp() {
+  const appHost = document.getElementById('charts-host');
   if (!appHost) {
-    console.error('Application host element (#charts-host) not found in index.html.');
-    document.body.textContent = 'Error: Application host element not found. Please ensure a <div id="charts-host"></div> exists in your HTML.';
+    console.error('Application host element (#charts-host) not found');
+    document.body.textContent = 'Error: Application host element not found';
     return;
   }
-  // Clear only the content of the appHost, not the entire body
+
   appHost.innerHTML = '';
 
-  sortToggleButton = document.getElementById('sort-toggle') as HTMLButtonElement | null;
-  if (sortToggleButton) {
-    updateSortButtonText(); // Set initial text
-    sortToggleButton.addEventListener('click', () => {
-      toggleSortOrder();
-      debouncedApplySort(); // Only reorder, do not recreate!
-    });
+  // Setup sort button
+  sortButton = document.getElementById('sort-toggle') as HTMLButtonElement;
+  if (sortButton) {
+    updateSortButtonText();
+    sortButton.addEventListener('click', toggleSort);
   }
 
+  // Create charts container
   chartsContainer = document.createElement('div');
   appHost.appendChild(chartsContainer);
-  // The following event listener is likely causing issues with the "runnable" sort.
-  // When data updates, it re-triggers a sort, which can lead to a loop of re-rendering.
-  // chartsContainer.addEventListener('data-updated', () => {
-  //   if (currentSortOrder === 'runnable') {
-  //     debouncedApplySort();
-  //   }
-  // });
 
   try {
-    const riverDetails = await getRiverDetails();
-    allRiverDetails = riverDetails;
-
-    if (!allRiverDetails || allRiverDetails.length === 0) {
-      if (chartsContainer) chartsContainer.textContent = 'No river details found.';
+    allRiverDetails = await getRiverDetails();
+    if (!allRiverDetails?.length) {
+      chartsContainer.textContent = 'No river details found.';
       return;
     }
-
-    renderRiverChartsFromMasterList();
-
+    renderCharts();
   } catch (error) {
-    console.error("Failed to initialize application:", error);
-    if (chartsContainer) chartsContainer.textContent = `Error initializing application: ${error instanceof Error ? error.message : String(error)}`;
+    console.error("Failed to initialize:", error);
+    chartsContainer.textContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
-function toggleSortOrder() {
+function toggleSort() {
   currentSortOrder = currentSortOrder === 'alphabetical' ? 'runnable' : 'alphabetical';
   updateSortButtonText();
+
+  // Clear the URL hash when toggling sort modes
+  history.replaceState(null, "", window.location.pathname);
+
+  applySorting();
 }
 
 function updateSortButtonText() {
-  if (sortToggleButton) {
-    sortToggleButton.textContent = `Sort by: ${currentSortOrder === 'alphabetical' ? 'Alphabetical' : 'Runnable'}`;
-    // Optional: Add a data attribute or class for styling based on state
-    sortToggleButton.setAttribute('data-sort', currentSortOrder);
+  if (sortButton) {
+    sortButton.textContent = `Sort by: ${currentSortOrder === 'alphabetical' ? 'Alphabetical' : 'Runnable'}`;
+    sortButton.setAttribute('data-sort', currentSortOrder);
   }
 }
 
-function renderRiverChartsFromMasterList() {
-  if (!chartsContainer || !allRiverDetails) return;
-  chartsContainer.innerHTML = ''; // Only on initial load
+function renderCharts() {
+  if (!chartsContainer) return;
 
-  // Initial sort for element creation order (primarily for alphabetical)
-  // "Runnable" sort will be properly applied by applySort after components load data.
-  const sortedDetails = [...allRiverDetails].sort((a, b) => {
-    const nameA = a.siteName?.toLowerCase() || '';
-    const nameB = b.siteName?.toLowerCase() || '';
-    return nameA.localeCompare(nameB);
-  });
+  chartsContainer.innerHTML = '';
 
-  for (const detail of sortedDetails) {
-    if (!detail.siteName || detail.siteName.trim() === '') {
-      console.warn(`Skipping river detail due to missing or empty siteName for display: ${JSON.stringify(detail)}`);
+  // Create all chart elements
+  for (const detail of allRiverDetails) {
+    if (!detail.siteName?.trim()) {
+      console.warn(`Skipping river with missing siteName:`, detail);
       continue;
     }
 
@@ -108,64 +88,54 @@ function renderRiverChartsFromMasterList() {
     chartsContainer.appendChild(chartElement);
   }
 
-  // Always apply initial sort based on currentSortOrder
-  // Data updates will trigger debouncedApplySort later if needed
-  applySort();
+  // Apply initial sorting
+  applySorting();
 }
 
-function debouncedApplySort() {
-  clearTimeout(debounceTimer);
-  debounceTimer = window.setTimeout(() => {
-    applySort();
-  }, 250); // Debounce delay
-}
-
-function applySort() {
+function applySorting() {
   if (!chartsContainer) return;
 
   const chartElements = Array.from(chartsContainer.children).filter(
     (el): el is RiverLevelChart => el instanceof RiverLevelChart
   );
 
-  // Before sorting and re-appending, explicitly tell components to clean up their charts.
-  // This ensures that when they are re-appended and re-rendered, the chart is created fresh.
-  chartElements.forEach(el => el.prepareForMove());
+  // Sort elements
+  chartElements.sort((a, b) => {
+    if (currentSortOrder === 'alphabetical') {
+      return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
+    } else {
+      // Runnable sort
+      const statusDiff = a.sortKeyRunnable - b.sortKeyRunnable;
+      if (statusDiff !== 0) return statusDiff;
+      // Tie-breaker: alphabetical
+      return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
+    }
+  });
 
-  if (currentSortOrder === 'alphabetical') {
-    chartElements.sort((a, b) => {
-      const nameA = a.displayName.toLowerCase();
-      const nameB = b.displayName.toLowerCase();
-      return nameA.localeCompare(nameB);
-    });
-  } else if (currentSortOrder === 'runnable') {
-    chartElements.sort((a, b) => {
-      const statusA = a.sortKeyRunnable;
-      const statusB = b.sortKeyRunnable;
-
-      if (statusA !== statusB) {
-        return statusA - statusB; // Lower key means higher priority
-      }
-      // Tie-breaker: alphabetical by display name
-      const nameA = a.displayName.toLowerCase();
-      const nameB = b.displayName.toLowerCase();
-      return nameA.localeCompare(nameB);
-    });
-  }
-
-  // Re-append sorted elements
+  // Re-append in sorted order
   chartElements.forEach(el => chartsContainer!.appendChild(el));
 
-  // Scroll to hash if present and element moved
-  const currentHash = window.location.hash.substring(1);
-  if (currentHash) {
-    const targetElement = chartElements.find(el => slugify(el.displayName) === currentHash);
-    if (targetElement) {
-      const rect = targetElement.getBoundingClientRect();
-      const isVisible = rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
-      if (!isVisible) { // Only scroll if not already largely visible
-        targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }
+  // Rebuild all charts after DOM reordering (Chart.js doesn't handle moves well)
+  setTimeout(() => {
+    chartElements.forEach(el => el.rebuildChart());
+  }, 50);
+
+  // Handle hash scrolling
+  handleHashScroll();
+}
+
+function handleHashScroll() {
+  const hash = window.location.hash.substring(1);
+  if (!hash) return;
+
+  const chartElements = Array.from(chartsContainer!.children) as RiverLevelChart[];
+  const targetElement = chartElements.find(el => slugify(el.displayName) === hash);
+
+  if (targetElement) {
+    // Delay to ensure charts are rebuilt and DOM is ready
+    setTimeout(() => {
+      targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
   }
 }
 
