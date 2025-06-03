@@ -245,6 +245,8 @@ export class RiverLevelChart extends LitElement {
     this.cleanupIntersectionObserver();
   }
 
+  private static levelsCache: Record<string, RiverLevel[]> = {};
+
   private async fetchData(): Promise<void> {
     if (!this.siteCode || !this.riverDetail || this.isFetchingInProgress) return;
 
@@ -255,10 +257,14 @@ export class RiverLevelChart extends LitElement {
     this.cleanupChart();
 
     try {
-      const levels = await getRiverLevelsBySiteCode(this.siteCode);
-      if (!this.isConnected) return;
-
-      this.levels = levels.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      if (RiverLevelChart.levelsCache[this.siteCode]) {
+        this.levels = RiverLevelChart.levelsCache[this.siteCode];
+      } else {
+        const levels = await getRiverLevelsBySiteCode(this.siteCode);
+        RiverLevelChart.levelsCache[this.siteCode] = levels;
+        this.levels = levels;
+      }
+      this.levels = this.levels.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       this.latestLevelValue = this.levels.length > 0 ? this.levels[this.levels.length - 1].value : null;
       this.hasData = this.levels.length > 0;
     } catch (err) {
@@ -299,6 +305,8 @@ export class RiverLevelChart extends LitElement {
       if (value <= high) return 0; // Optimal
     } else if (lowIsNum && highIsNum && low === high) { // Exact point
       if (value === low) return 0; // Optimal
+    } else if (lowIsNum && highIsNum && low > high) {
+      return 2; // Invalid range
     }
 
     if ((lowIsNum && highIsNum && low < high) || (lowIsNum && !highIsNum) || (!lowIsNum && highIsNum) || (lowIsNum && highIsNum && low === high)) {

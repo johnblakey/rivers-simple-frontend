@@ -40,7 +40,7 @@ async function initializeApp() {
     updateSortButtonText(); // Set initial text
     sortToggleButton.addEventListener('click', () => {
       toggleSortOrder();
-      debouncedApplySort(); // Use debounced sort after toggle
+      debouncedApplySort(); // Only reorder, do not recreate!
     });
   }
 
@@ -84,7 +84,7 @@ function updateSortButtonText() {
 
 function renderRiverChartsFromMasterList() {
   if (!chartsContainer || !allRiverDetails) return;
-  chartsContainer.innerHTML = ''; // Clear previous charts
+  chartsContainer.innerHTML = ''; // Only on initial load
 
   // Initial sort for element creation order (primarily for alphabetical)
   // "Runnable" sort will be properly applied by applySort after components load data.
