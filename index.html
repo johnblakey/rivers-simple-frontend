@@ -9,11 +9,36 @@
     <link rel="stylesheet" href="/src/styles/style.css" />
   </head>
   <body>
+    <header>
+      <nav class="main-nav">
+        <a href="/" class="nav-logo-link">
+          <img src="/river-level-logo-tiny.png" alt="River Level Logo" class="nav-logo" />
+          Home
+        </a>
+        <a href="/about.html">About</a>
+      </nav>
+      <!-- The main H1 for the home page is already in the main section -->
+    </header>
     <main>
       <h1>Rivers</h1>
       <h2>Pacific Northwest</h2>
       <div id="charts-host"></div>
     </main>
+    <footer>
+      <div class="footer-content">
+        <a href="https://waterservices.usgs.gov/" target="_blank" rel="noopener noreferrer" class="footer-link usgs-link">
+          <img src="/river-level-logo-tiny.png" alt="River Level Logo" class="footer-logo" />
+          United States Geological Survey (USGS.gov) Powered.
+        </a>
+        <p class="feedback-email">Questions? Email me at <a href="mailto:johnblakeyorg@gmail.com">johnblakeyorg@gmail.com</a></p>
+      </div>
+      <div class="footer-bottom-nav">
+        <a href="/">Home</a> | <a href="/public/about.html">About</a> | &copy; <span id="footer-year"></span> Rivers Project
+      </div>
+    </footer>
+    <script>
+      document.getElementById('footer-year').textContent = new Date().getFullYear();
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
