@@ -41,6 +41,44 @@ h2 {
   gap: 24px; /* Space between river chart components */
 }
 
+/* Navigation Bar */
+.main-nav {
+  background-color: #34495e; /* Dark blue-gray background */
+  padding: 10px 0; /* Vertical padding */
+  display: flex;
+  justify-content: center; /* Center nav items */
+  align-items: center;
+  gap: 20px; /* Space between Home link group and About link */
+}
+
+.main-nav a {
+  color: #ffffff; /* White text for links */
+  text-decoration: none;
+  padding: 10px 15px; /* Padding for clickable area */
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+  font-size: 1em; /* Base font size for nav links */
+}
+
+.main-nav a:hover,
+.main-nav a:focus {
+  background-color: #4a6278; /* Slightly lighter shade on hover/focus */
+  text-decoration: none;
+}
+
+/* Styling for the logo link which contains an image and text */
+.nav-logo-link {
+  display: flex; /* Align logo and text "Home" horizontally */
+  align-items: center;
+  gap: 8px; /* Space between logo and "Home" text */
+  font-weight: bold; /* Make "Home" text bold */
+}
+
+.nav-logo {
+  height: 24px; /* Set a specific height for the logo */
+  width: auto; /* Maintain aspect ratio */
+}
+
 /* Add horizontal padding to body for desktop views to ensure side background is visible */
 @media (min-width: 769px) {
   body {
