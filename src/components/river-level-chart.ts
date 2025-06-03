@@ -384,11 +384,6 @@ export class RiverLevelChart extends LitElement {
     }
   }
 
-  private handleIntersection(entries: IntersectionObserverEntry[]): void {
-    // Only observe, do not update hash
-    // (You can keep this empty or remove if not needed)
-  }
-
   private clearChartAndData(): void {
     this.cleanupChart();
     this.levels = [];
@@ -476,5 +471,10 @@ export class RiverLevelChart extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  private handleIntersection(_entries: IntersectionObserverEntry[]) {
+    // You can implement logic here if you want to react to visibility changes.
+    // For now, this can be left empty or used for debugging.
   }
 }
