@@ -382,6 +382,9 @@ export class RiverLevelChart extends LitElement {
           },
         },
         plugins: {
+          legend: {
+            display: false, // <-- Add this line to hide the legend
+          },
           subtitle: {
             display: !!latestLevel,
             text: latestLevel
