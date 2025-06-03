@@ -138,6 +138,7 @@ export class RiverLevelChart extends LitElement {
   @state() private isLoading = false;
   @state() private error: string | null = null;
   @state() private hasData = false;
+  @state() private shouldScrollIntoView = false;
 
   private chartInstance: Chart | null = null;
   private isFetchingInProgress = false;
@@ -201,6 +202,10 @@ export class RiverLevelChart extends LitElement {
   protected willUpdate(changed: Map<string | number | symbol, unknown>) {
     if (changed.has("siteCode") || changed.has("riverDetail")) {
       if (this.siteCode && this.riverDetail) {
+        const slug = slugify(this.displayName);
+        if (window.location.hash === `#${slug}`) {
+          this.shouldScrollIntoView = true;
+        }
         this.fetchData();
       } else {
         this.clearChartAndData();
@@ -208,19 +213,28 @@ export class RiverLevelChart extends LitElement {
     }
   }
 
-  protected updated(changedProperties: Map<string | number | symbol, unknown>) {
-    super.updated(changedProperties);
+  protected updated() {
     this.renderChartIfReady();
     this.updateIntersectionObserver();
+
+    if (this.shouldScrollIntoView && this.hasData && !this.isLoading) {
+      const slug = slugify(this.displayName);
+      const target = this.shadowRoot?.getElementById(slug);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        this.shouldScrollIntoView = false;
+      }
+    }
   }
 
   protected firstUpdated() {
+    // Scroll to this river if the slug matches the URL hash on initial load
     const slug = slugify(this.displayName);
-    const target = this.shadowRoot?.getElementById(slug);
-    if (window.location.hash === `#${slug}` && target) {
-      setTimeout(() => {
+    if (window.location.hash === `#${slug}`) {
+      const target = this.shadowRoot?.getElementById(slug);
+      if (target) {
         target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 0);
+      }
     }
   }
 
@@ -259,10 +273,7 @@ export class RiverLevelChart extends LitElement {
     const canvas = this.shadowRoot?.querySelector("#riverChartCanvas") as HTMLCanvasElement | null;
     if (canvas) {
       this.createChart(canvas);
-      const slug = slugify(this.displayName);
-      if (window.location.hash !== `#${slug}`) {
-        history.replaceState(null, "", `#${slug}`);
-      }
+      // No hash update here!
     }
   }
 
@@ -374,13 +385,8 @@ export class RiverLevelChart extends LitElement {
   }
 
   private handleIntersection(entries: IntersectionObserverEntry[]): void {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      const targetId = (entry.target as HTMLElement).id;
-      if (targetId === this.currentObservedId && !this.isLoading && window.location.hash !== `#${targetId}`) {
-        history.replaceState(null, "", `#${targetId}`);
-      }
-    }
+    // Only observe, do not update hash
+    // (You can keep this empty or remove if not needed)
   }
 
   private clearChartAndData(): void {
@@ -412,12 +418,9 @@ export class RiverLevelChart extends LitElement {
     return this.riverDetail?.siteName || this.siteCode || "Loading River Data...";
   }
 
-  private handleHover() {
+  private handleClick() {
     const slug = slugify(this.displayName);
     history.replaceState(null, "", `#${slug}`);
-  }
-
-  private handleClick() {
     this.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -460,8 +463,11 @@ export class RiverLevelChart extends LitElement {
       <div
         class="river-info-container"
         id="${slug}"
-        @mouseenter=${this.handleHover}
         @click=${this.handleClick}
+        style="cursor: pointer;"
+        tabindex="0"
+        role="button"
+        aria-label="Show details for ${this.displayName}"
       >
         <h2>${this.displayName}</h2>
         ${this.renderRiverDetails()}
