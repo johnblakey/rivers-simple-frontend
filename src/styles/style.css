@@ -44,16 +44,12 @@ h2 {
 /* Navigation Bar */
 .main-nav {
   background-color: #34495e; /* Dark blue-gray background */
-  padding: 10px 20px; /* Vertical and horizontal padding within the nav bar */
+  padding: 0; /* No padding for the bar itself; content centers with flex */
   display: flex;
   justify-content: center; /* Center nav items */
   align-items: center;
   gap: 20px; /* Space between Home link group and About link */
-
-  /* Make it a contained, rounded block */
-  max-width: 1200px;    /* Align with main content width */
-  margin: 20px auto;   /* Center the nav bar and add top/bottom margin */
-  border-radius: 8px;  /* Round the corners */
+  margin: 0; /* Full width at the top of the page */
 }
 
 .main-nav a {
@@ -86,22 +82,106 @@ h2 {
 
 /* Add horizontal padding to body for desktop views to ensure side background is visible */
 @media (min-width: 769px) {
-  body {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
+  /* Body horizontal padding removed to allow .main-nav to span full viewport width. */
+  /* The main content area centers itself using its own margins. */
 }
 
 /* Basic responsive adjustments */
 @media (max-width: 768px) {
-  .main-nav {
-    margin: 10px; /* Align with main content's mobile margin */
-    /* max-width: 1200px from base still applies but won't be hit on small screens */
-  }
+  /* .main-nav rule removed; base style (margin: 0) now applies for full width on mobile too. */
   main {
     margin: 10px;
     padding: 15px;
   }
   h1 { font-size: 2em; }
   h2 { font-size: 1.5em; }
+}
+
+footer {
+  background: #34495e;
+  color: #fff;
+  padding: 20px 0 16px 0; /* Match top/bottom spacing to main content */
+  margin-top: 20px;        /* Match main's top margin */
+  border-radius: 0;        /* Remove rounded corners */
+  box-shadow: 0 -2px 12px rgba(44, 62, 80, 0.08);
+  font-size: 1.05em;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto 16px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-link.usgs-link {
+  color: #aee6fa;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.footer-link.usgs-link:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.feedback-email {
+  margin: 0;
+  font-size: 0.98em;
+  color: #e0e0e0;
+}
+.feedback-email a {
+  color: #aee6fa;
+  text-decoration: underline;
+}
+
+.footer-bottom-nav {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 12px;
+  border-top: 1px solid #46627a;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 0.98em;
+  color: #e0e0e0;
+}
+
+.footer-logo {
+  height: 28px;
+  width: auto;
+  vertical-align: middle;
+  margin-right: 8px;
+  border-radius: 4px;
+  background: #fff;
+  padding: 2px;
+  box-shadow: 0 1px 4px rgba(44,62,80,0.08);
+}
+
+.footer-bottom-nav a {
+  color: #aee6fa;
+  text-decoration: none;
+  margin: 0 4px;
+  transition: color 0.2s;
+}
+.footer-bottom-nav a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Responsive adjustments for footer */
+@media (max-width: 600px) {
+  .footer-content, .footer-bottom-nav {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  .footer-logo {
+    margin-bottom: 6px;
+    margin-right: 0;
+  }
 }
