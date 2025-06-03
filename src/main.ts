@@ -45,12 +45,14 @@ async function initializeApp() {
   }
 
   chartsContainer = document.createElement('div');
-  chartsContainer.addEventListener('data-updated', () => {
-    if (currentSortOrder === 'runnable') {
-      debouncedApplySort();
-    }
-  });
   appHost.appendChild(chartsContainer);
+  // The following event listener is likely causing issues with the "runnable" sort.
+  // When data updates, it re-triggers a sort, which can lead to a loop of re-rendering.
+  // chartsContainer.addEventListener('data-updated', () => {
+  //   if (currentSortOrder === 'runnable') {
+  //     debouncedApplySort();
+  //   }
+  // });
 
   try {
     const riverDetails = await getRiverDetails();
