@@ -139,6 +139,7 @@ export class RiverLevelChart extends LitElement {
   @state() private error: string | null = null;
   @state() private hasData = false;
   @state() private shouldScrollIntoView = false;
+  @state() private latestLevelValue: number | null = null;
 
   private chartInstance: Chart | null = null;
   private isFetchingInProgress = false;
@@ -258,13 +259,52 @@ export class RiverLevelChart extends LitElement {
       if (!this.isConnected) return;
 
       this.levels = levels.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      this.latestLevelValue = this.levels.length > 0 ? this.levels[this.levels.length - 1].value : null;
       this.hasData = this.levels.length > 0;
     } catch (err) {
       this.error = err instanceof Error ? err.message : "Failed to load river levels.";
+      this.latestLevelValue = null; // Ensure reset on error
     } finally {
       this.isLoading = false;
       this.isFetchingInProgress = false;
+      this.dispatchEvent(new CustomEvent('data-updated', { bubbles: true, composed: true }));
     }
+  }
+
+  /**
+   * Provides a sort key for "runnable" status.
+   * Lower numbers indicate higher priority (more runnable).
+   * 0: Optimal/Runnable
+   * 1: Not Optimal/Runnable (but criteria were clear, e.g., too low/high)
+   * 2: Runnability criteria unclear or invalid (e.g., lowAdvised > highAdvised, or no advised levels)
+   * 3: RiverDetail object missing (cannot determine advised CFS)
+   * 4: Chart data is currently loading
+   * 5: No chart data available
+   */
+  public get sortKeyRunnable(): number {
+    if (this.isLoading) return 4;
+    if (!this.hasData || this.latestLevelValue === null) return 5;
+    if (!this.riverDetail) return 3;
+
+    const value = this.latestLevelValue;
+    const { lowAdvisedCFS: low, highAdvisedCFS: high } = this.riverDetail;
+    const lowIsNum = typeof low === 'number';
+    const highIsNum = typeof high === 'number';
+
+    if (lowIsNum && highIsNum && low < high) { // Standard range
+      if (value >= low && value <= high) return 0; // Optimal
+    } else if (lowIsNum && !highIsNum) { // Only low defined
+      if (value >= low) return 0; // Optimal
+    } else if (!lowIsNum && highIsNum) { // Only high defined
+      if (value <= high) return 0; // Optimal
+    } else if (lowIsNum && highIsNum && low === high) { // Exact point
+      if (value === low) return 0; // Optimal
+    }
+
+    if ((lowIsNum && highIsNum && low < high) || (lowIsNum && !highIsNum) || (!lowIsNum && highIsNum) || (lowIsNum && highIsNum && low === high)) {
+      return 1; // Not optimal, but criteria existed
+    }
+    return 2; // Runnability criteria unclear/invalid
   }
 
   private renderChartIfReady(): void {
@@ -389,6 +429,7 @@ export class RiverLevelChart extends LitElement {
     this.levels = [];
     this.hasData = false;
     this.error = null;
+    this.latestLevelValue = null;
     this.isLoading = false;
   }
 
@@ -409,7 +450,7 @@ export class RiverLevelChart extends LitElement {
     this.currentObservedId = "";
   }
 
-  private get displayName(): string {
+  public get displayName(): string {
     return this.riverDetail?.siteName || this.siteCode || "Loading River Data...";
   }
 
