@@ -1,5 +1,19 @@
+# Node.js
 node_modules
+npm-debug.log
+
+# Build artifacts
 dist
+build
+
+# Git files
 .git
+.gitignore
+.gitattributes
+
+# IDE and OS specific
 .vscode
+.idea
+.DS_Store
+Thumbs.db
 *.log
