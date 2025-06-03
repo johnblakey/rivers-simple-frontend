@@ -221,28 +221,33 @@ export class RiverLevelChart extends LitElement {
     if (this.shouldScrollIntoView && this.hasData && !this.isLoading) {
       const slug = slugify(this.displayName);
       const target = this.shadowRoot?.getElementById(slug);
+
+      // We attempt to scroll if the target exists.
+      // We reset `shouldScrollIntoView` if:
+      // 1. The target exists (regardless of whether scroll happened or was needed).
+      // 2. The target doesn't exist, but the slug was valid (not "loading..."),
+      //    implying we expected it but it wasn't rendered (e.g. error/no data state).
+      let shouldResetFlag = false;
+
       if (target) {
         target.scrollIntoView({ behavior: "smooth", block: "start" });
-        this.shouldScrollIntoView = false;
+        shouldResetFlag = true;
+      } else {
+        // If target is not found, but the slug is not the "loading" slug,
+        // it means displayName was resolved, but the element itself might not be rendered
+        // (e.g. due to error or no data). In this case, we should still reset the flag.
+        if (slug && slug !== slugify("Loading River Data...")) {
+          shouldResetFlag = true;
+        }
+      }
+
+      if (shouldResetFlag) {
+        // Defer this state change to prevent the "update after update" warning.
+        Promise.resolve().then(() => {
+          this.shouldScrollIntoView = false;
+        });
       }
     }
-  }
-
-  protected firstUpdated() {
-    // Scroll to this river if the slug matches the URL hash on initial load
-    const slug = slugify(this.displayName);
-    if (window.location.hash === `#${slug}`) {
-      const target = this.shadowRoot?.getElementById(slug);
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.cleanupChart();
-    this.cleanupIntersectionObserver();
   }
 
   private static levelsCache: Record<string, RiverLevel[]> = {};
@@ -275,6 +280,14 @@ export class RiverLevelChart extends LitElement {
       this.isFetchingInProgress = false;
       this.dispatchEvent(new CustomEvent('data-updated', { bubbles: true, composed: true }));
     }
+  }
+
+  // Removed firstUpdated() method as its scroll logic is covered by willUpdate + updated.
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.cleanupChart();
+    this.cleanupIntersectionObserver();
   }
 
   /**
@@ -456,6 +469,14 @@ export class RiverLevelChart extends LitElement {
     }
     this.observedElement = null;
     this.currentObservedId = "";
+  }
+
+  /**
+   * Called externally before the component is moved in the DOM.
+   * Ensures the existing chart is cleaned up so it can be recreated.
+   */
+  public prepareForMove(): void {
+    this.cleanupChart();
   }
 
   public get displayName(): string {

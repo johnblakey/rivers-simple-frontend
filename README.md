@@ -198,6 +198,7 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Change structure of html and typescirpt to allow links to particular dashboards (url#river_name)~~
 - ~~Add Terms of Use page, create a separate page~~
 - ~~Delete riverdetails gaugeName properties, (workaround need now removed)~~
+- Fix river graph disappears when runnable toggle clicked
 - Create Dockerfile
 - Create tailwind css
 - Create simplified slug code for main and river-level-chart.ts

@@ -127,6 +127,10 @@ function applySort() {
     (el): el is RiverLevelChart => el instanceof RiverLevelChart
   );
 
+  // Before sorting and re-appending, explicitly tell components to clean up their charts.
+  // This ensures that when they are re-appended and re-rendered, the chart is created fresh.
+  chartElements.forEach(el => el.prepareForMove());
+
   if (currentSortOrder === 'alphabetical') {
     chartElements.sort((a, b) => {
       const nameA = a.displayName.toLowerCase();
