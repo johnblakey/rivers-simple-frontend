@@ -26,7 +26,6 @@ function linkify(text: string): string {
 
 Chart.register(...registerables, AnnotationPlugin);
 
-// Constants
 const CHART_COLORS = {
   bands: {
     belowLow: "rgba(255, 99, 132, 0.2)",
@@ -51,7 +50,6 @@ const INTERSECTION_OBSERVER_CONFIG = {
   threshold: 0.5,
 };
 
-// Utility functions
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -267,9 +265,20 @@ export class RiverLevelChart extends LitElement {
 
   protected updated(changedProperties: Map<string | number | symbol, unknown>) {
     super.updated(changedProperties);
-
     this.renderChartIfReady();
     this.updateIntersectionObserver();
+  }
+
+  protected firstUpdated() {
+    const slug = slugify(this.displayName);
+    if (window.location.hash === `#${slug}`) {
+      setTimeout(() => {
+        const target = this.shadowRoot?.getElementById(slug);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 0);
+    }
   }
 
   disconnectedCallback() {
@@ -291,11 +300,10 @@ export class RiverLevelChart extends LitElement {
 
     try {
       const levels = await getRiverLevelsBySiteCode(this.siteCode);
-
       if (!this.isConnected) return;
 
-      this.levels = levels.sort(
-        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      this.levels = levels.sort((a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       );
       this.hasData = this.levels.length > 0;
     } catch (err) {
@@ -307,9 +315,7 @@ export class RiverLevelChart extends LitElement {
   }
 
   private renderChartIfReady(): void {
-    if (this.isLoading || this.error || !this.hasData || this.chartInstance) {
-      return;
-    }
+    if (this.isLoading || this.error || !this.hasData || this.chartInstance) return;
 
     const canvas = this.shadowRoot?.querySelector("#riverChartCanvas") as HTMLCanvasElement | null;
     if (canvas) {
@@ -382,9 +388,7 @@ export class RiverLevelChart extends LitElement {
           },
         },
         plugins: {
-          legend: {
-            display: false, // <-- Add this line to hide the legend
-          },
+          legend: { display: false },
           subtitle: {
             display: !!latestLevel,
             text: latestLevel
@@ -408,9 +412,7 @@ export class RiverLevelChart extends LitElement {
     const nameForId = this.riverDetail?.siteName || this.siteCode || "Loading River Data...";
     const expectedId = nameForId ? slugify(nameForId) : "";
 
-    if (this.currentObservedId === expectedId && this.observedElement) {
-      return;
-    }
+    if (this.currentObservedId === expectedId && this.observedElement) return;
 
     this.cleanupCurrentObservation();
     this.currentObservedId = expectedId;
@@ -490,9 +492,7 @@ export class RiverLevelChart extends LitElement {
   }
 
   private renderRiverDetails() {
-    if (!this.riverDetail) {
-      return html`<p>River details not available.</p>`;
-    }
+    if (!this.riverDetail) return html`<p>River details not available.</p>`;
 
     const {
       americanWhitewaterLink,
@@ -513,30 +513,18 @@ export class RiverLevelChart extends LitElement {
           </p>
         ` : ""}
 
-        <p>
-          <strong>Advised Flow (CFS):</strong>
-          Low: ${lowAdvisedCFS ?? "N/A"} - High: ${highAdvisedCFS ?? "N/A"}
-        </p>
+        <p><strong>Advised Flow (CFS):</strong> Low: ${lowAdvisedCFS ?? "N/A"} - High: ${highAdvisedCFS ?? "N/A"}</p>
 
         ${comments ? html`
-          <p>
-            <strong>Comments:</strong>
-            ${unsafeHTML(linkify(comments))}
-          </p>
+          <p><strong>Comments:</strong> ${unsafeHTML(linkify(comments))}</p>
         ` : ""}
 
         ${gaugeSource ? html`
-          <p>
-            <strong>Gauge Source:</strong>
-            <a href="${gaugeSource}" target="_blank">Link</a>
-          </p>
+          <p><strong>Gauge Source:</strong> <a href="${gaugeSource}" target="_blank">Link</a></p>
         ` : ""}
 
         ${localWeatherNOAA ? html`
-          <p>
-            <strong>NOAA Weather:</strong>
-            <a href="${localWeatherNOAA}" target="_blank">Link</a>
-          </p>
+          <p><strong>NOAA Weather:</strong> <a href="${localWeatherNOAA}" target="_blank">Link</a></p>
         ` : ""}
       </div>
     `;
@@ -565,12 +553,10 @@ export class RiverLevelChart extends LitElement {
 
     return html`
       <div class="river-info-container" id="${slugify(name)}">
-        <div class="river-info-container">
-          <h2>${name}</h2>
-          ${this.renderRiverDetails()}
-          <div class="chart-status-container">
-            ${this.renderChartContainer()}
-          </div>
+        <h2>${name}</h2>
+        ${this.renderRiverDetails()}
+        <div class="chart-status-container">
+          ${this.renderChartContainer()}
         </div>
       </div>
     `;
