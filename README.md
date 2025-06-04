@@ -104,9 +104,16 @@ q + Enter
 
 <https://lit.dev/articles/lit-cheat-sheet/>
 
+For production, use Vite production build vs development build. Note warning in console goes away.
+
 ## Dockerize Frontend and Deploy to Google Cloud Run
 
-TODO update these backend deployment notes for the frontend
+### Build process
+
+Docker image should be lean and delete items not needed after setup (TODO - verify this)
+I use "server" to make assets avaialble to website in production build
+
+### Steps
 
 Created artifact repo <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-backend?hl=en&inv=1&invt=AbyuDg&project=river-level-0> in Google Cloud. Default settings, single region, turned off scanning to save money.
 
@@ -189,12 +196,15 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Add Terms of Use page, create a separate page~~
 - ~~Delete riverdetails gaugeName properties, (workaround need now removed)~~
 - ~~Fix river graph disappears when runnable toggle clicked~~
-- Create Dockerfile - deploy to Cloud Run
+- ~~Create Dockerfile - deploy to Cloud Run~~
 - Verify prod changes - deploy to Cloud Run
 - Create tailwind css
 - Create simplified slug code for main and river-level-chart.ts
+- Use Apple style toggle for sorting vs button
+- Add CSS to about.html
 
 ### Production
 
-- TODO - Put Lit in production mode (verify if other tech needs prod mode)
+- Verify I put Lit in production mode by using | $ npm run prod:build | in the Dockerfile
 - Verify that Cloud Run backend deployment is set to production env after frontend deployment
+- Fix Network error when putting in ENVIRONMENT production in the Cloud Run instance
