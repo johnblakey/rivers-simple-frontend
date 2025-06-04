@@ -124,7 +124,7 @@ Tag the next (e.g. v1 -> v2) create docker image version to use in Cloud Run
 $ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v3
 
 Push the created Docker image tag to the Artifact Registry
-$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v2
+$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v3
 
 If push fails try to sign into Google Artifact Registry in VSCode terminal. It updates the Docker configuration file. Then try pushing to docker above again.
 $ gcloud auth configure-docker us-west1-docker.pkg.dev
@@ -144,23 +144,23 @@ or test locally with browser
 
 If not passing, verify the same bug in local testing. Fix and start process again.
 
-If passing the test, note the last tag using the convention vx.y.z (e.g., v0.1.2) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.2 > "Describe new features or bugfixes"
+If passing the test, note the last tag using the convention vx.y.z (e.g., v0.1.3) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.3 > "Describe new features or bugfixes"
 
 Push created local tag to GitHub
 $  git push origin <tag_name>
 Note that the tag was pushed to GitHub
 
 Tag the validated v5 docker image to the GitHub tag
-$ docker tag rivers-flask us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-flask:v0.1.2
+$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.3
 
 Push the GitHub tag Docker image to the Artifact Registry
-$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-flask:v0.1.2
+$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.3
 
-<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-backend/rivers-flask?hl=en&inv=1&invt=AbyvOg&project=river-level-0> - Note the served docker version that is verified now has a tag that is reflected in GitHub for tracking.
+<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?hl=en&inv=1&invt=AbzOFg&project=river-level-0> - Note the served docker version that is verified now has a tag that is reflected in GitHub for tracking.
 
 Cleanup - delete old artifacts in the Google Cloud repo, you pay for storage <https://console.cloud.google.com/artifacts?referrer=search&hl=en&inv=1&invt=AbyvEw&project=river-level-0>
 
-Congrats, you now modified the rivers frontend, tested it, and deployed it with good tags for tracking.
+Congrats, you now modified the rivers frontend, tested it, and deployed it with good tags for tracking in GitHub and Google Cloud.
 
 ## Docker Debugging
 
