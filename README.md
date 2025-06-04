@@ -197,14 +197,26 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Delete riverdetails gaugeName properties, (workaround need now removed)~~
 - ~~Fix river graph disappears when runnable toggle clicked~~
 - ~~Create Dockerfile - deploy to Cloud Run~~
-- Verify prod changes - deploy to Cloud Run
-- Create tailwind css
-- Create simplified slug code for main and river-level-chart.ts
+- Create simplified slug code
+- Simplify Lit Component
 - Use Apple style toggle for sorting vs button
 - Add CSS to about.html
+- Make timezone change in chart.js based on client timezone
+- Change ft3/s to cubic feet per second CFS
+
+### Long-term TODO
+
+- Add user login capability
+  - Allow saving chart positions
+  - Allow setting timezone (or have the client set it)
+  - Favorite charts
+  - Add a form for users to submit river links
+  - Create tailwind css
 
 ### Production
 
 - Verify I put Lit in production mode by using | $ npm run prod:build | in the Dockerfile
 - Verify that Cloud Run backend deployment is set to production env after frontend deployment
-- Fix Network error when putting in ENVIRONMENT production in the Cloud Run instance
+- Fix Network error when putting in ENVIRONMENT production in the Cloud Run instance (CORS issue)
+- Apply principle of least privilege to Google Service Accounts for Cloud Run
+- Verify that only frontend clients can call the Flask API
