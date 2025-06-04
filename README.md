@@ -121,7 +121,7 @@ Optional - see images in Docker VS Code extension (or $ docker images). Notice t
 Note last Docker Image tag currently in the Google Cloud Artifacts <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?hl=en&inv=1&invt=AbzKVw&project=river-level-0>
 
 Tag the next (e.g. v1 -> v2) create docker image version to use in Cloud Run
-$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v2
+$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v3
 
 Push the created Docker image tag to the Artifact Registry
 $ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v2

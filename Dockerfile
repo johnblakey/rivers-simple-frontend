@@ -20,7 +20,7 @@ FROM node:20-alpine AS production
 RUN addgroup -S appgroup && adduser -S -G appgroup appuser
 
 # Install a simple static file server
-RUN npm install -g serve
+RUN npm install -g serve@14.2.0
 
 # Copy built files from builder
 COPY --from=builder --chown=appuser:appgroup /app/dist /app/dist
@@ -35,4 +35,4 @@ USER appuser
 EXPOSE ${PORT:-3000}
 
 # Serve the app. serve will pick up the PORT environment variable from Cloud Run.
-CMD ["serve", "-s", "dist"]
+CMD ["serve", "dist"]
