@@ -1,3 +1,9 @@
+# Local personal prompt files
+.prompts/
+
+# VS Code
+.vscode/
+
 # Vite
 .vite
 

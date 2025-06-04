@@ -6,11 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run lint && tsc && vite build",
     "preview": "vite preview",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
     "compile": "tsc",
+    "prod:build": "vite build",
+    "build": "npm run compile && npm run lint && vite build && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -26,6 +27,10 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "chart.js": "^4.4.9",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-plugin-annotation": "^3.1.0",
+    "date-fns": "^4.1.0",
     "lit": "^3.3.0"
   }
 }
