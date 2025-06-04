@@ -73,6 +73,12 @@ export class RiverLevelChart extends LitElement {
       color: #757575;
       font-style: italic;
     }
+
+    @media (max-width: 768px) {
+      :host {
+        padding: 16px 8px; /* Reduced left/right padding for mobile */
+      }
+    }
   `;
 
   protected async willUpdate(changed: Map<string | number | symbol, unknown>) {
@@ -195,6 +201,7 @@ export class RiverLevelChart extends LitElement {
       options: {
         responsive: true,
         maintainAspectRatio: true,
+        aspectRatio: 1.5, // Default is 2. Smaller value makes chart taller for its width.
         scales: {
           x: {
             type: "time",

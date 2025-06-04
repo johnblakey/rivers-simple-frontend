@@ -164,9 +164,10 @@ Congrats, you now modified the rivers frontend, tested it, and deployed it with 
 
 ## Docker Debugging
 
-TODO - update from backend to frontend steps
+TODO - document how to debug Docker apps
 Set PORT and run the Docker container
 $ docker run -p 8080:8080 -e PORT=8080 rivers-lit
+Read the output to know how to access the website with the URL
 
 ## Cloud Run
 
