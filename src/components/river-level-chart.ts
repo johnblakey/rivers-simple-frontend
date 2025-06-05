@@ -312,15 +312,8 @@ export class RiverLevelChart extends LitElement {
             ${this.riverDetail.americanWhitewaterLink ? html`
               <p><a href="${this.riverDetail.americanWhitewaterLink}" target="_blank">American Whitewater</a></p>
             ` : ""}
-            <p><strong>Advised Flow:</strong> ${this.riverDetail.lowAdvisedCFS ?? "N/A"} - ${this.riverDetail.highAdvisedCFS ?? "N/A"} CFS</p>
-            ${this.riverDetail.comments ? html`
-              <p><strong>Comments:</strong> ${unsafeHTML(linkify(this.riverDetail.comments))}</p>
-            ` : ""}
-            ${this.riverDetail.gaugeSource ? html`
-              <p><strong>Gauge:</strong> <a href="${this.riverDetail.gaugeSource}" target="_blank">Link</a></p>
-            ` : ""}
-            ${this.riverDetail.localWeatherNOAA ? html`
-              <p><strong>Weather:</strong> <a href="${this.riverDetail.localWeatherNOAA}" target="_blank">NOAA</a></p>
+            ${!(this.riverDetail.lowAdvisedCFS === 0 && this.riverDetail.highAdvisedCFS === 0) ? html`
+              <p><strong>Advised Flow:</strong> ${this.riverDetail.lowAdvisedCFS ?? "N/A"} - ${this.riverDetail.highAdvisedCFS ?? "N/A"} CFS</p>
             ` : ""}
           </div>
         ` : ""}
@@ -332,6 +325,22 @@ export class RiverLevelChart extends LitElement {
         ` : this.levels.length ? html`
           <canvas></canvas>
         ` : null}
+
+        ${this.riverDetail ? html`
+          <div class="details-below">
+            ${this.riverDetail.comments ? html`
+              <p><strong>Comments:</strong> ${unsafeHTML(linkify(this.riverDetail.comments))}</p>
+            ` : ""}
+            ${this.riverDetail.gaugeSource && this.riverDetail.localWeatherNOAA ? html`
+              <p><strong>Gauge:</strong> <a href="${this.riverDetail.gaugeSource}" target="_blank">Link</a> | <strong>Weather:</strong> <a href="${this.riverDetail.localWeatherNOAA}" target="_blank">NOAA</a></p>
+            ` : this.riverDetail.gaugeSource ? html`
+              <p><strong>Gauge:</strong> <a href="${this.riverDetail.gaugeSource}" target="_blank">Link</a></p>
+            ` : this.riverDetail.localWeatherNOAA ? html`
+              <p><strong>Weather:</strong> <a href="${this.riverDetail.localWeatherNOAA}" target="_blank">NOAA</a></p>
+            ` : ""
+            }
+          </div>
+        ` : ""}
       </div>
     `;
   }
