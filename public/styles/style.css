@@ -26,7 +26,6 @@ h1 {
   text-align: center;
   margin-bottom: 18px;  /* Less space below the title */
   font-size: 2.2em;     /* Slightly smaller */
-  margin-top: 0;
 }
 
 h2 {
@@ -83,12 +82,6 @@ h2 {
 .nav-logo {
   height: 24px; /* Set a specific height for the logo */
   width: auto; /* Maintain aspect ratio */
-}
-
-/* Add horizontal padding to body for desktop views to ensure side background is visible */
-@media (min-width: 769px) {
-  /* Body horizontal padding removed to allow .main-nav to span full viewport width. */
-  /* The main content area centers itself using its own margins. */
 }
 
 /* Basic responsive adjustments */

@@ -104,9 +104,16 @@ q + Enter
 
 <https://lit.dev/articles/lit-cheat-sheet/>
 
+For production, use Vite production build vs development build. Note warning in console goes away.
+
 ## Dockerize Frontend and Deploy to Google Cloud Run
 
-TODO update these backend deployment notes for the frontend
+### Build process
+
+Docker image should be lean and delete items not needed after setup (TODO - verify this)
+I use "server" to make assets avaialble to website in production build
+
+### Steps
 
 Created artifact repo <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-backend?hl=en&inv=1&invt=AbyuDg&project=river-level-0> in Google Cloud. Default settings, single region, turned off scanning to save money.
 
@@ -118,13 +125,17 @@ Note - the command here ^ and below use the default behavior that the latest tag
 
 Optional - see images in Docker VS Code extension (or $ docker images). Notice the rivers-lit has a "latest" image now (if you saw the previous images that existed on the local machine).
 
+Test docker locally, (be sure the backend Cloud Run is set to "development" or it will not connect)
+$ docker run -p 8080:8080 -e PORT=8080 rivers-lit
+If the docker image passes testing, move onto the next steps to deploy it.
+
 Note last Docker Image tag currently in the Google Cloud Artifacts <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?hl=en&inv=1&invt=AbzKVw&project=river-level-0>
 
 Tag the next (e.g. v1 -> v2) create docker image version to use in Cloud Run
-$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v3
+$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v4
 
 Push the created Docker image tag to the Artifact Registry
-$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v3
+$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v4
 
 If push fails try to sign into Google Artifact Registry in VSCode terminal. It updates the Docker configuration file. Then try pushing to docker above again.
 $ gcloud auth configure-docker us-west1-docker.pkg.dev
@@ -144,7 +155,9 @@ or test locally with browser
 
 If not passing, verify the same bug in local testing. Fix and start process again.
 
-If passing the test, note the last tag using the convention vx.y.z (e.g., v0.1.3) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.3 > "Describe new features or bugfixes"
+If passing the test, merge the test branch into main. Then create a tag.
+
+Note the last tag using the convention vx.y.z (e.g., v0.1.4) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.4 > "Describe new features or bugfixes"
 
 Push created local tag to GitHub
 $  git push origin <tag_name>
@@ -189,12 +202,28 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Add Terms of Use page, create a separate page~~
 - ~~Delete riverdetails gaugeName properties, (workaround need now removed)~~
 - ~~Fix river graph disappears when runnable toggle clicked~~
-- Create Dockerfile - deploy to Cloud Run
-- Verify prod changes - deploy to Cloud Run
-- Create tailwind css
-- Create simplified slug code for main and river-level-chart.ts
+- ~~Create Dockerfile - deploy to Cloud Run~~
+- ~~Add CSS to about.html~~
+- ~~Make timezone change in chart.js based on client timezone~~
+- ~~Change ft3/s to cubic feet per second CFS~~
+- Create simplified slug code
+- Simplify Lit Component
+- Use Apple style toggle for sorting vs button
+
+### Long-term TODO
+
+- Add user login capability
+  - Allow saving chart positions
+  - Allow setting timezone (or have the client set it)
+  - Favorite charts
+  - Add a form for users to submit river links
+  - Create tailwind css
+  - Change river-level file names or river-levels file names to rivers project
 
 ### Production
 
-- TODO - Put Lit in production mode (verify if other tech needs prod mode)
+- Verify I put Lit in production mode by using | $ npm run prod:build | in the Dockerfile
 - Verify that Cloud Run backend deployment is set to production env after frontend deployment
+- Fix Network error when putting in ENVIRONMENT production in the Cloud Run instance (CORS issue)
+- Apply principle of least privilege to Google Service Accounts for Cloud Run
+- Verify that only frontend clients can call the Flask API

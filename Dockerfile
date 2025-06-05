@@ -5,13 +5,13 @@ WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --omit-dev
 
 # Copy source
 COPY . .
 
 # Build static site
-RUN npm run prod:build
+RUN npm run build:prod
 
 # ---------- Production Stage ----------
 FROM node:20-alpine AS production
