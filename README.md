@@ -132,10 +132,10 @@ If the docker image passes testing, move onto the next steps to deploy it.
 Note last Docker Image tag currently in the Google Cloud Artifacts <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?hl=en&inv=1&invt=AbzKVw&project=river-level-0>
 
 Tag the next (e.g. v1 -> v2) create docker image version to use in Cloud Run
-$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v3
+$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v4
 
 Push the created Docker image tag to the Artifact Registry
-$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v3
+$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v4
 
 If push fails try to sign into Google Artifact Registry in VSCode terminal. It updates the Docker configuration file. Then try pushing to docker above again.
 $ gcloud auth configure-docker us-west1-docker.pkg.dev
@@ -155,7 +155,9 @@ or test locally with browser
 
 If not passing, verify the same bug in local testing. Fix and start process again.
 
-If passing the test, note the last tag using the convention vx.y.z (e.g., v0.1.3) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.3 > "Describe new features or bugfixes"
+If passing the test, merge the test branch into main. Then create a tag.
+
+Note the last tag using the convention vx.y.z (e.g., v0.1.4) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.4 > "Describe new features or bugfixes"
 
 Push created local tag to GitHub
 $  git push origin <tag_name>
