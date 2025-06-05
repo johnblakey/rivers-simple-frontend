@@ -203,6 +203,7 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Add CSS to about.html~~
 - Make timezone change in chart.js based on client timezone
 - Change ft3/s to cubic feet per second CFS
+- Change river-level or river-levels to rivers project
 
 ### Long-term TODO
 
