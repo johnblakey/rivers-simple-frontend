@@ -143,24 +143,20 @@ $ gcloud auth configure-docker us-west1-docker.pkg.dev
 Verify the version tag push was successful to the Artifact Registry -> <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?hl=en&inv=1&invt=AbzKVw&project=river-level-0>
 
 Deploy the latest version tag to Cloud Run: go to Cloud Run Console page > <https://console.cloud.google.com/run?hl=en&inv=1&invt=AbyufQ&project=river-level-0> > rivers-backend > settings > Edit & deploy new revision > Containers > Edit Containers > choose Image URL > check version (e.g. v2) image > Select > selected 128 Mib of memory | chose unauthenticated invocation | PORT 8080 choice acts as setting $PORT in the command line
+TODO - when prod vs dev added use Revision tags "dev" "prod" as needed
 
 Verify the URL on the <https://console.cloud.google.com/run/detail/us-west1/rivers-flask/revisions?project=river-level-0&hl=en&inv=1&invt=AbyvEw> page shows the latest functional app
 
-Verify <https://api.rivers.johnblakey.org/> is showing the latest functional app (depending on CORS setting) (verify bugs were not introduced | manual regression testing/QA [TODO - add test suite]) | Use cURL if CORS doesn't allow a direct browser call
-$ curl -X GET <https://api.rivers.johnblakey.org/riverdetails>
-or test deployment with browser
-<https://api.rivers.johnblakey.org/riverlevels/sitecode/14231900>
-or test locally with browser
-<http://127.0.0.1:5000/riverlevels/sitecode/14231900>
+Verify <https://rivers.johnblakey.org/> is showing the latest functional app
 
 If not passing, verify the same bug in local testing. Fix and start process again.
 
-If passing the test, create pull request into main merge the test branch into main. Then create a tag.
+If passing the test, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
 
-Note the last tag using the convention vx.y.z (e.g., v0.1.4) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.4 > "Describe new features or bugfixes"
+To creat the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.4 > "Describe new features or bugfixes"
 
 Push created local tag to GitHub
-$  git push origin <tag_name>
+$  git push origin v0.1.4
 Note that the tag was pushed to GitHub
 
 Tag the validated v5 docker image to the GitHub tag
