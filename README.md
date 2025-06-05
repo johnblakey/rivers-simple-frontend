@@ -208,7 +208,8 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 
 ### Long-term TODO
 
-- Add user login capability
+- Add user login capability (use Google Cloud authentication | Firebase | Datastore)
+  - First, allow user to save type of sort chosen (alphabetical vs current)
   - Allow saving chart positions
   - Allow setting timezone (or have the client set it)
   - Favorite charts
