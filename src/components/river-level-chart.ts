@@ -154,6 +154,13 @@ export class RiverLevelChart extends LitElement {
     }
   }
 
+  private getDisplayUnit(unitCode: string | undefined): string {
+    if (unitCode === 'ft3/s') {
+      return 'Cubic Feet Per Second (CFS)';
+    }
+    return unitCode || "N/A";
+  }
+
   private renderChart(): void {
     if (this.isLoading || this.error || !this.levels.length) {
       this.destroyChart();
@@ -171,7 +178,7 @@ export class RiverLevelChart extends LitElement {
       const chartData: ChartData = {
         labels: this.levels.map(l => new Date(l.timestamp)),
         datasets: [{
-          label: `Flow (${this.levels[0]?.unitCode || "N/A"})`,
+          label: `Flow (${this.getDisplayUnit(this.levels[0]?.unitCode)})`,
           data: this.levels.map(l => l.value),
           borderColor: "rgb(75, 192, 192)",
           tension: 0.1,
@@ -194,6 +201,7 @@ export class RiverLevelChart extends LitElement {
   private buildChartConfig(chartData: ChartData): ChartConfiguration {
     const { lowAdvisedCFS: low, highAdvisedCFS: high } = this.riverDetail || {};
     const latest = this.levels[this.levels.length - 1];
+    const currentUnitDisplay = this.getDisplayUnit(latest?.unitCode);
 
     return {
       type: "line",
@@ -207,12 +215,18 @@ export class RiverLevelChart extends LitElement {
             type: "time",
             time: {
               unit: "day",
-              tooltipFormat: "MMM d, yyyy HH:mm",
+              tooltipFormat: "MMM d, yyyy h:mm a", // Changed to 12-hour format with AM/PM
+              displayFormats: { // Added to ensure axis labels also use 12-hour format if hours are shown
+                hour: "h a",
+                minute: "h:mm a",
+                second: "h:mm:ss a"
+                // You can add other formats (day, week, month, etc.) if needed
+              }
             },
             title: { display: true, text: "Time" },
           },
           y: {
-            title: { display: true, text: `Level (${latest?.unitCode || "N/A"})` },
+            title: { display: true, text: `Level (${currentUnitDisplay})` },
             grace: "5%",
           },
         },
@@ -220,7 +234,7 @@ export class RiverLevelChart extends LitElement {
           legend: { display: false },
           subtitle: {
             display: !!latest,
-            text: latest ? `Current: ${latest.value} ${latest.unitCode}` : "",
+            text: latest ? `Current Flow: ${latest.value} ${currentUnitDisplay}` : "",
             color: latest ? getCurrentLevelColor(latest.value, low, high) : CHART_COLORS.text.subtitleDefault,
             font: { size: 14, weight: "bold" },
             padding: { bottom: 10 },

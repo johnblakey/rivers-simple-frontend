@@ -200,7 +200,7 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - Create simplified slug code
 - Simplify Lit Component
 - Use Apple style toggle for sorting vs button
-- Add CSS to about.html
+- ~~Add CSS to about.html~~
 - Make timezone change in chart.js based on client timezone
 - Change ft3/s to cubic feet per second CFS
 
