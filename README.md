@@ -155,7 +155,7 @@ or test locally with browser
 
 If not passing, verify the same bug in local testing. Fix and start process again.
 
-If passing the test, merge the test branch into main. Then create a tag.
+If passing the test, create pull request into main merge the test branch into main. Then create a tag.
 
 Note the last tag using the convention vx.y.z (e.g., v0.1.4) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.4 > "Describe new features or bugfixes"
 
@@ -164,10 +164,10 @@ $  git push origin <tag_name>
 Note that the tag was pushed to GitHub
 
 Tag the validated v5 docker image to the GitHub tag
-$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.3
+$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.4
 
 Push the GitHub tag Docker image to the Artifact Registry
-$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.3
+$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.4
 
 <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?hl=en&inv=1&invt=AbzOFg&project=river-level-0> - Note the served docker version that is verified now has a tag that is reflected in GitHub for tracking.
 
