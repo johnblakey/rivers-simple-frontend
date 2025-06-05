@@ -7,11 +7,12 @@
   "scripts": {
     "dev": "vite",
     "preview": "vite preview",
+    "build": "vite build",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
     "compile": "tsc",
-    "prod:build": "vite build",
-    "build": "npm run compile && npm run lint && vite build && npm run dev",
+    "build:prod": "npm run compile && vite build",
+    "build:full:dev": "npm run compile && npm run lint && npm run preview && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

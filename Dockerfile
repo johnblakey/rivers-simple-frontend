@@ -11,7 +11,7 @@ RUN npm install --omit-dev
 COPY . .
 
 # Build static site
-RUN npm run prod:build
+RUN npm run build:prod
 
 # ---------- Production Stage ----------
 FROM node:20-alpine AS production

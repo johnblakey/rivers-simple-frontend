@@ -125,6 +125,10 @@ Note - the command here ^ and below use the default behavior that the latest tag
 
 Optional - see images in Docker VS Code extension (or $ docker images). Notice the rivers-lit has a "latest" image now (if you saw the previous images that existed on the local machine).
 
+Test docker locally, (be sure the backend Cloud Run is set to "development" or it will not connect)
+$ docker run -p 8080:8080 -e PORT=8080 rivers-lit
+If the docker image passes testing, move onto the next steps to deploy it.
+
 Note last Docker Image tag currently in the Google Cloud Artifacts <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?hl=en&inv=1&invt=AbzKVw&project=river-level-0>
 
 Tag the next (e.g. v1 -> v2) create docker image version to use in Cloud Run
@@ -197,13 +201,12 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Delete riverdetails gaugeName properties, (workaround need now removed)~~
 - ~~Fix river graph disappears when runnable toggle clicked~~
 - ~~Create Dockerfile - deploy to Cloud Run~~
+- ~~Add CSS to about.html~~
+- ~~Make timezone change in chart.js based on client timezone~~
+- ~~Change ft3/s to cubic feet per second CFS~~
 - Create simplified slug code
 - Simplify Lit Component
 - Use Apple style toggle for sorting vs button
-- ~~Add CSS to about.html~~
-- Make timezone change in chart.js based on client timezone
-- Change ft3/s to cubic feet per second CFS
-- Change river-level or river-levels to rivers project
 
 ### Long-term TODO
 
@@ -213,6 +216,7 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
   - Favorite charts
   - Add a form for users to submit river links
   - Create tailwind css
+  - Change river-level file names or river-levels file names to rivers project
 
 ### Production
 
