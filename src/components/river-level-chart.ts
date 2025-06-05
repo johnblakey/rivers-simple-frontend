@@ -178,7 +178,7 @@ export class RiverLevelChart extends LitElement {
       const chartData: ChartData = {
         labels: this.levels.map(l => new Date(l.timestamp)),
         datasets: [{
-          label: `Flow (${this.getDisplayUnit(this.levels[0]?.unitCode)})`,
+          label: `${this.getDisplayUnit(this.levels[0]?.unitCode)}`,
           data: this.levels.map(l => l.value),
           borderColor: "rgb(75, 192, 192)",
           tension: 0.1,
@@ -226,7 +226,7 @@ export class RiverLevelChart extends LitElement {
             title: { display: true, text: "Time" },
           },
           y: {
-            title: { display: true, text: `Level (${currentUnitDisplay})` },
+            title: { display: true, text: `${currentUnitDisplay}` },
             grace: "5%",
           },
         },
