@@ -32,6 +32,7 @@
     "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-plugin-annotation": "^3.1.0",
     "date-fns": "^4.1.0",
-    "lit": "^3.3.0"
+    "lit": "^3.3.0",
+    "firebase": "^10.12.0"
   }
 }
