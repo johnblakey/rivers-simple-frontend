@@ -68,25 +68,14 @@ $ npm run (name_command)
 
 Created a launch.json file that enables Debugging Extension of TypeScript
 
-### Create a new app to test in Chrome
+### Local Debugging
 
-$ npm run build
-combines the individual TypeScript, linting, and server build into one for testing
+$ npm run build:full:dev
+Combines the individual TypeScript, linting, and server build into one for testing
 
-then run VSCode "Run and Debug" test with Chrome, works by pointing at Vite dev server
+Then run VSCode "Run and Debug" test with Chrome, works by pointing at Vite dev server
 
-Set env in Cloud Run to development so that endpoint is available to local frontend
-
-### Local Testing Google Cloud Login (can remove after full new restart succeeds without Google login)
-
-Was required if terminal or VS Code back when frontend directly connected to Datastore
-
-- Login for Cloud Code repo with river-level-0 | use VS Code menu to authenticate then choose the project name
-- $ gcloud auth login
-- Adjust to river-level-0 project
-- Login to Google Cloud CLI Application Default Credentials (ADC) to enable Datastore connection
-- $ gcloud auth login --update-adc
-- See instructions below for compiling and running the app
+If hitting the production API set env in Cloud Run to "development" vs "production" so that endpoint is available to local frontend.
 
 ## Vite
 
