@@ -191,26 +191,31 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Add CSS to about.html~~
 - ~~Make timezone change in chart.js based on client timezone~~
 - ~~Change ft3/s to cubic feet per second CFS~~
-- Create simplified slug code
-- Simplify Lit Component
 - Use Apple style toggle for sorting vs button
+
+### Authentication TODO
+
+- ~~Add user login capability (use Google Cloud authentication | Firebase | Datastore)~~
+- ~~Favorite charts pinned to top~~
+- Fix avatar not uploading and fix the position of the avatar and login
+- Allow user to save type of sort chosen (alphabetical vs current)
+- Verify aving chart positions
+- Allow manually setting timezone (default is use the client to set it)
+- Allow rearranging (arrows? drag them?) favorite charts pinned to top and save the new arrangement
 
 ### Long-term TODO
 
-- Add user login capability (use Google Cloud authentication | Firebase | Datastore)
-  - Fix avatar not uploading and fix the position of the avatar and login
-  - First, allow user to save type of sort chosen (alphabetical vs current)
-  - Allow saving chart positions
-  - Allow setting timezone (or have the client set it)
-  - Favorite charts - complete
-  - Add a form for users to submit river links
-  - Create tailwind css
-  - Change river-level file names or river-levels file names to rivers project
+- Add a form for users to submit river links
+- Create tailwind css
+- Change river-level file names or river-levels file names to rivers project
+- Simplify slug code
+- Simplify Lit Component
+- Simplify User Authentication
+- Simplify data.ts pulling data
 
 ### Production
 
 - Verify I put Lit in production mode by using | $ npm run prod:build | in the Dockerfile
 - Verify that Cloud Run backend deployment is set to production env after frontend deployment
-- Fix Network error when putting in ENVIRONMENT production in the Cloud Run instance (CORS issue)
 - Apply principle of least privilege to Google Service Accounts for Cloud Run
-- Verify that only frontend clients can call the Flask API
+- Simplify CORS and development, currently development Env is required in Cloud Run to allow test frontends to access river levels, but a config in the frontend (.env.local (see comments there)) is needed to manually point to a local backend API instance, need to sort out, does not make sense
