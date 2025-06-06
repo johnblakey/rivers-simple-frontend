@@ -12,7 +12,7 @@ class UserPreferencesService {
 
   constructor() {
     // Use environment variable for API base URL
-    this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    this.baseUrl = import.meta.env.API_BASE_URL || 'http://localhost:8080';
   }
 
   private async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {

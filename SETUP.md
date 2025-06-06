@@ -11,16 +11,19 @@ This guide will help you set up Google authentication for your Rivers app.
 
 1. Go to the [Firebase Console](https://console.firebase.google.com/)
 2. Create a new project or select your existing Google Cloud project
+   1. Selected project river-level-0
 3. Enable Authentication and configure Google as a sign-in provider:
-   - Go to Authentication > Sign-in method
+   - Go to Firebase Console > All Products > Authentication > Get Started > Sign-in method > Get
    - Enable Google provider
+     - Enabled Google
    - Add your domain (rivers.johnblakey.org) to authorized domains
+     - Authentication > Settings > Authorized domains > Add domain > rivers.johnblakey.org > Save
 
 ## Step 2: Get Firebase Configuration
 
-1. In Firebase Console, go to Project Settings > General
-2. Scroll down to "Your apps" and click "Add app" > Web app
-3. Register your app with a name (e.g., "Rivers Frontend")
+1. In Firebase Console, go to > river-level-0 > Project Overview > Gear > Project Settings > General
+2. Scroll down to "Your apps" and click "Add app" > Web app </>
+3. Register your app with a name (e.g., "Rivers Simple Frontend") > Register app
 4. Copy the Firebase configuration object
 
 ## Step 3: Frontend Setup

@@ -12,7 +12,7 @@
     "lint": "eslint . --ext .ts",
     "compile": "tsc",
     "build:prod": "npm run compile && vite build",
-    "build:full:dev": "npm run compile && npm run lint && npm run preview && npm run dev",
+    "build:full:dev": "npm run compile && npm run lint && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

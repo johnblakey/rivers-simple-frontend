@@ -2,6 +2,7 @@ import { getRiverDetails } from './utility/data';
 import type { RiverDetail } from './utility/data';
 import { RiverLevelChart } from './components/river-level-chart';
 import { slugify } from './utility/string-utils';
+import { FavoriteButton } from './components/firebase-button.ts'; // Import FavoriteButton
 import './utility/auth-ui'; // Import the auth UI component
 import { authService } from './utility/auth-service';
 
@@ -109,17 +110,28 @@ function renderCharts() {
 
   chartsContainer.innerHTML = '';
 
-  // Create all chart elements
   for (const detail of allRiverDetails) {
     if (!detail.siteName?.trim()) {
       console.warn(`Skipping river with missing siteName:`, detail);
       continue;
     }
 
+    const chartWrapper = document.createElement('div');
+    chartWrapper.className = 'chart-with-favorite-wrapper'; // Wrapper for chart and button
+    // Set an ID on the wrapper if needed for direct targeting, e.g., for hash scrolling
+    chartWrapper.id = `wrapper-${slugify(detail.siteName)}`;
+
     const chartElement = new RiverLevelChart();
     chartElement.siteCode = detail.siteCode;
     chartElement.riverDetail = detail;
-    chartsContainer.appendChild(chartElement);
+
+    const favoriteButton = document.createElement('favorite-button') as FavoriteButton;
+    favoriteButton.siteCode = detail.siteCode;
+    favoriteButton.riverName = detail.siteName;
+
+    chartWrapper.appendChild(favoriteButton); // Add button to wrapper
+    chartWrapper.appendChild(chartElement); // Add chart to wrapper
+    chartsContainer.appendChild(chartWrapper); // Add wrapper to container
   }
 
   // Apply initial sorting
@@ -129,43 +141,46 @@ function renderCharts() {
 async function applySorting() {
   if (!chartsContainer) return;
 
-  const chartElements = Array.from(chartsContainer.children).filter(
-    (el): el is RiverLevelChart => el instanceof RiverLevelChart
-  );
+  const chartWrappers = Array.from(chartsContainer.children) as HTMLElement[];
 
-  // Sort elements
+  // Sort wrapper elements based on their RiverLevelChart child
   if (currentSortOrder === 'alphabetical') {
-    chartElements.sort((a, b) => {
+    chartWrappers.sort((aWrapper, bWrapper) => {
+      const a = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
+      const b = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
       return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
     });
   } else if (currentSortOrder === 'runnable') {
-    chartElements.sort((a, b) => {
+    chartWrappers.sort((aWrapper, bWrapper) => {
+      const a = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
+      const b = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
       const statusDiff = a.sortKeyRunnable - b.sortKeyRunnable;
       if (statusDiff !== 0) return statusDiff;
-      // Tie-breaker: alphabetical
       return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
     });
   } else if (currentSortOrder === 'favorites') {
-    // For favorites sorting, we need to check which rivers are favorites
-    // This is async, so we'll handle it differently
-    await sortByFavorites(chartElements);
+    await sortByFavorites(chartWrappers); // Pass wrappers to sortByFavorites
   }
 
-  // Re-append in sorted order (only if not favorites sorting, which handles its own reordering)
+  // Re-append in sorted order (sortByFavorites handles its own reordering)
   if (currentSortOrder !== 'favorites') {
-    chartElements.forEach(el => chartsContainer!.appendChild(el));
+    chartWrappers.forEach(wrapper => chartsContainer!.appendChild(wrapper));
   }
 
-  // Rebuild all charts after DOM reordering (Chart.js doesn't handle moves well)
+  // Rebuild all charts after DOM reordering
   setTimeout(() => {
-    chartElements.forEach(el => el.rebuildChart());
+    chartWrappers.forEach(wrapper => {
+      const chart = wrapper.querySelector('river-level-chart') as RiverLevelChart;
+      if (chart && typeof chart.rebuildChart === 'function') {
+        chart.rebuildChart();
+      }
+    });
   }, 50);
 
-  // Handle hash scrolling
   handleHashScroll();
 }
 
-async function sortByFavorites(chartElements: RiverLevelChart[]) {
+async function sortByFavorites(chartWrappers: HTMLElement[]) {
   if (!authService.isSignedIn()) {
     return;
   }
@@ -173,43 +188,50 @@ async function sortByFavorites(chartElements: RiverLevelChart[]) {
   try {
     // We'll need to import the user preferences service
     const { userPreferencesService } = await import('./utility/user-preferences-service');
+    // const { userPreferencesService } = await import('./utility/user-preferences-service.ts'); // Ensure .ts if needed
     const preferences = await userPreferencesService.getUserPreferences();
     const favoriteRivers = preferences?.favoriteRivers || [];
 
-    chartElements.sort((a, b) => {
+    chartWrappers.sort((aWrapper, bWrapper) => {
+      const a = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
+      const b = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
       const aIsFavorite = favoriteRivers.includes(a.siteCode);
       const bIsFavorite = favoriteRivers.includes(b.siteCode);
 
       if (aIsFavorite && !bIsFavorite) return -1;
       if (!aIsFavorite && bIsFavorite) return 1;
 
-      // If both are favorites or both are not favorites, sort alphabetically
       return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
     });
 
     // Re-append in sorted order
-    chartElements.forEach(el => chartsContainer!.appendChild(el));
+    chartWrappers.forEach(wrapper => chartsContainer!.appendChild(wrapper));
   } catch (error) {
     console.error('Error sorting by favorites:', error);
     // Fall back to alphabetical sorting
-    chartElements.sort((a, b) => {
+    chartWrappers.sort((aWrapper, bWrapper) => {
+      const a = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
+      const b = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
       return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
     });
-    chartElements.forEach(el => chartsContainer!.appendChild(el));
+    chartWrappers.forEach(wrapper => chartsContainer!.appendChild(wrapper));
   }
 }
 
 function handleHashScroll() {
   const hash = window.location.hash.substring(1);
-  if (!hash) return;
+  if (!hash || !chartsContainer) return;
 
-  const chartElements = Array.from(chartsContainer!.children) as RiverLevelChart[];
-  const targetElement = chartElements.find(el => slugify(el.displayName) === hash);
+  const chartWrappers = Array.from(chartsContainer.children) as HTMLElement[];
+  const targetWrapper = chartWrappers.find(wrapper => {
+    const chart = wrapper.querySelector('river-level-chart') as RiverLevelChart;
+    return chart && slugify(chart.displayName) === hash;
+  });
 
-  if (targetElement) {
+  if (targetWrapper) {
     // Delay to ensure charts are rebuilt and DOM is ready
     setTimeout(() => {
-      targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      targetWrapper.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 150);
   }
 }
