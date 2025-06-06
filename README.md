@@ -198,10 +198,11 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 ### Long-term TODO
 
 - Add user login capability (use Google Cloud authentication | Firebase | Datastore)
+  - Fix avatar not uploading and fix the position of the avatar and login
   - First, allow user to save type of sort chosen (alphabetical vs current)
   - Allow saving chart positions
   - Allow setting timezone (or have the client set it)
-  - Favorite charts
+  - Favorite charts - complete
   - Add a form for users to submit river links
   - Create tailwind css
   - Change river-level file names or river-levels file names to rivers project
