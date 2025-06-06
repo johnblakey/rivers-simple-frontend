@@ -123,6 +123,11 @@ export class FavoriteButton extends LitElement {
       } else {
         await userPreferencesService.addFavoriteRiver(this.siteCode);
         this.isFavorite = true;
+        // Dispatch a custom event to notify that favorites might have changed
+        this.dispatchEvent(new CustomEvent('favorite-changed', {
+          bubbles: true, // Allow event to bubble up the DOM tree
+          composed: true // Allow event to cross shadow DOM boundaries
+        }));
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);

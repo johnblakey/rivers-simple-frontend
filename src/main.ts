@@ -43,6 +43,11 @@ async function initializeApp() {
   appHost.appendChild(chartsContainer);
 
   try {
+    // Listen for favorite changes on the charts container
+    // Since the event bubbles, we can listen here for changes from any button
+    chartsContainer.addEventListener('favorite-changed', applySorting);
+
+    // Fetch and render charts initially
     allRiverDetails = await getRiverDetails();
     if (!allRiverDetails?.length) {
       chartsContainer.textContent = 'No river details found.';
@@ -61,6 +66,11 @@ async function initializeApp() {
       // If user signs out while on favorites sort, switch to alphabetical
       currentSortOrder = 'alphabetical';
       updateSortButtonText();
+      applySorting();
+    }
+
+    // Re-apply sorting when the user signs in, in case favorites changed
+    if (user) {
       applySorting();
     }
   });
@@ -143,29 +153,46 @@ async function applySorting() {
 
   const chartWrappers = Array.from(chartsContainer.children) as HTMLElement[];
 
-  // Sort wrapper elements based on their RiverLevelChart child
-  if (currentSortOrder === 'alphabetical') {
-    chartWrappers.sort((aWrapper, bWrapper) => {
-      const a = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
-      const b = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
-      return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
-    });
-  } else if (currentSortOrder === 'runnable') {
-    chartWrappers.sort((aWrapper, bWrapper) => {
-      const a = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
-      const b = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
-      const statusDiff = a.sortKeyRunnable - b.sortKeyRunnable;
-      if (statusDiff !== 0) return statusDiff;
-      return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
-    });
-  } else if (currentSortOrder === 'favorites') {
-    await sortByFavorites(chartWrappers); // Pass wrappers to sortByFavorites
+  let favoriteSiteCodes: string[] = [];
+  if (authService.isSignedIn()) {
+    try {
+      const { userPreferencesService } = await import('./utility/user-preferences-service');
+      const preferences = await userPreferencesService.getUserPreferences();
+      favoriteSiteCodes = preferences?.favoriteRivers || [];
+    } catch (error) {
+      console.error('Error fetching favorites for sorting:', error);
+      // Continue without favorites if fetching fails, items will be sorted without pinning.
+    }
   }
 
-  // Re-append in sorted order (sortByFavorites handles its own reordering)
-  if (currentSortOrder !== 'favorites') {
-    chartWrappers.forEach(wrapper => chartsContainer!.appendChild(wrapper));
-  }
+  const isSiteFavorite = (siteCode: string) => favoriteSiteCodes.includes(siteCode);
+
+  chartWrappers.sort((aWrapper, bWrapper) => {
+    const aChart = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
+    const bChart = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
+
+    if (!aChart || !bChart) return 0; // Should not happen if wrappers are structured correctly
+
+    const aIsFav = isSiteFavorite(aChart.siteCode);
+    const bIsFav = isSiteFavorite(bChart.siteCode);
+
+    // Pinning logic: favorites always come before non-favorites
+    if (aIsFav && !bIsFav) return -1;
+    if (!aIsFav && bIsFav) return 1;
+
+    // If both are favorites or both are non-favorites, apply current sort order
+    if (currentSortOrder === 'alphabetical' || currentSortOrder === 'favorites') {
+      return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
+    } else if (currentSortOrder === 'runnable') {
+      const statusDiff = aChart.sortKeyRunnable - bChart.sortKeyRunnable;
+      if (statusDiff !== 0) return statusDiff;
+      return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
+    }
+    return 0;
+  });
+
+  // Re-append in sorted order
+  chartWrappers.forEach(wrapper => chartsContainer!.appendChild(wrapper));
 
   // Rebuild all charts after DOM reordering
   setTimeout(() => {
@@ -178,44 +205,6 @@ async function applySorting() {
   }, 50);
 
   handleHashScroll();
-}
-
-async function sortByFavorites(chartWrappers: HTMLElement[]) {
-  if (!authService.isSignedIn()) {
-    return;
-  }
-
-  try {
-    // We'll need to import the user preferences service
-    const { userPreferencesService } = await import('./utility/user-preferences-service');
-    // const { userPreferencesService } = await import('./utility/user-preferences-service.ts'); // Ensure .ts if needed
-    const preferences = await userPreferencesService.getUserPreferences();
-    const favoriteRivers = preferences?.favoriteRivers || [];
-
-    chartWrappers.sort((aWrapper, bWrapper) => {
-      const a = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
-      const b = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
-      const aIsFavorite = favoriteRivers.includes(a.siteCode);
-      const bIsFavorite = favoriteRivers.includes(b.siteCode);
-
-      if (aIsFavorite && !bIsFavorite) return -1;
-      if (!aIsFavorite && bIsFavorite) return 1;
-
-      return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
-    });
-
-    // Re-append in sorted order
-    chartWrappers.forEach(wrapper => chartsContainer!.appendChild(wrapper));
-  } catch (error) {
-    console.error('Error sorting by favorites:', error);
-    // Fall back to alphabetical sorting
-    chartWrappers.sort((aWrapper, bWrapper) => {
-      const a = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
-      const b = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
-      return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
-    });
-    chartWrappers.forEach(wrapper => chartsContainer!.appendChild(wrapper));
-  }
 }
 
 function handleHashScroll() {
