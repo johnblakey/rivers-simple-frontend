@@ -21,9 +21,13 @@ export class FavoriteButton extends LitElement {
   @state()
   private isSignedIn = false;
 
+  @state()
+  private showSignInPromptPopover = false;
+
   static styles = css`
     :host {
       display: inline-block;
+      position: relative; /* For popover positioning */
     }
 
     .favorite-button {
@@ -43,7 +47,7 @@ export class FavoriteButton extends LitElement {
       background-color: rgba(0, 0, 0, 0.05);
     }
 
-    .favorite-button:disabled {
+    .favorite-button.disabled-look:not(:disabled) { /* Style for when not signed in but clickable */
       cursor: not-allowed;
       opacity: 0.6;
     }
@@ -62,11 +66,29 @@ export class FavoriteButton extends LitElement {
       color: #95a5a6;
     }
 
-    .sign-in-prompt {
+    .popover {
+      position: absolute;
+      background-color: #333;
+      color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
       font-size: 0.75rem;
-      color: #666;
-      font-style: italic;
-      padding: 0.25rem 0.5rem;
+      z-index: 10;
+      bottom: 100%; /* Position above the button */
+      left: 50%;
+      transform: translateX(-50%) translateY(-0.5rem); /* Center and add some space */
+      white-space: nowrap;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .popover::after { /* Arrow for the popover */
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px; /* Half of border-width */
+      border-width: 5px;
+      border-style: solid;
+      border-color: #333 transparent transparent transparent;
     }
 
     @media (max-width: 768px) {
@@ -112,10 +134,20 @@ export class FavoriteButton extends LitElement {
   }
 
   private async toggleFavorite() {
-    if (!this.siteCode || !this.isSignedIn || this.isLoading) return;
+    if (!this.siteCode) return;
+
+    if (!this.isSignedIn) {
+      this.showSignInPromptPopover = true;
+      // Auto-hide popover after a few seconds
+      setTimeout(() => {
+        this.showSignInPromptPopover = false;
+      }, 3000);
+      return;
+    }
+
+    if (this.isLoading) return;
 
     this.isLoading = true;
-
     try {
       if (this.isFavorite) {
         await userPreferencesService.removeFavoriteRiver(this.siteCode);
@@ -158,28 +190,28 @@ export class FavoriteButton extends LitElement {
   }
 
   render() {
-    if (!this.isSignedIn) {
-      return html`
-        <div class="sign-in-prompt">
-          Sign in to save favorites
-        </div>
-      `;
-    }
-
     const buttonTitle = this.isFavorite
       ? `Remove ${this.riverName || 'river'} from favorites`
       : `Add ${this.riverName || 'river'} to favorites`;
 
+    // Apply 'disabled-look' class if user is not signed in
+    const buttonClasses = `favorite-button ${!this.isSignedIn ? 'disabled-look' : ''}`;
+
     return html`
       <button
-        class="favorite-button"
+        class="${buttonClasses}"
         title="${buttonTitle}"
         @click=${this.toggleFavorite}
-        ?disabled=${this.isLoading || !this.siteCode}
+        ?disabled=${this.isLoading && this.isSignedIn}
       >
         ${this.renderHeartIcon()}
-        ${this.isLoading ? 'Loading...' : ''}
+        ${this.isLoading && this.isSignedIn ? 'Loading...' : ''}
       </button>
+      ${this.showSignInPromptPopover && !this.isSignedIn ? html`
+        <div class="popover">
+          Sign in to save favorites
+        </div>
+      ` : ''}
     `;
   }
 }

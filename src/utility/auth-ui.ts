@@ -26,6 +26,7 @@ export class AuthUI extends LitElement {
     .auth-container {
       display: flex;
       align-items: center;
+      justify-content: flex-end; /* Align content to the right */
       gap: 1rem;
       flex-wrap: wrap;
     }
