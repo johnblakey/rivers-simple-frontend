@@ -1,0 +1,54 @@
+steps:
+  # Build with secrets from Secret Manager
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg=FIREBASE_API_KEY_ARG=$$FIREBASE_API_KEY'
+      - '--build-arg=FIREBASE_AUTH_DOMAIN_ARG=$$FIREBASE_AUTH_DOMAIN'
+      - '--build-arg=FIREBASE_PROJECT_ID_ARG=$$FIREBASE_PROJECT_ID'
+      - '--build-arg=FIREBASE_STORAGE_BUCKET_ARG=$$FIREBASE_STORAGE_BUCKET'
+      - '--build-arg=FIREBASE_MESSAGING_SENDER_ID_ARG=$$FIREBASE_MESSAGING_SENDER_ID'
+      - '--build-arg=FIREBASE_APP_ID_ARG=$$FIREBASE_APP_ID'
+      - '--build-arg=API_BASE_URL_ARG=$$API_BASE_URL'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:$SHORT_SHA'
+      - '.'
+    secretEnv:
+      - 'FIREBASE_API_KEY'
+      - 'FIREBASE_AUTH_DOMAIN'
+      - 'FIREBASE_PROJECT_ID'
+      - 'FIREBASE_STORAGE_BUCKET'
+      - 'FIREBASE_MESSAGING_SENDER_ID'
+      - 'FIREBASE_APP_ID'
+      - 'API_BASE_URL'
+
+  # Push to registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:$SHORT_SHA']
+
+  # Deploy to Cloud Run (no secrets needed here since they're baked in)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'rivers-lit'
+      - '--image=us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:$SHORT_SHA'
+      - '--region=us-west1'
+      - '--allow-unauthenticated'
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/river-level-0/secrets/firebase-api-key/versions/latest
+      env: 'FIREBASE_API_KEY'
+    - versionName: projects/river-level-0/secrets/firebase-auth-domain/versions/latest
+      env: 'FIREBASE_AUTH_DOMAIN'
+    - versionName: projects/river-level-0/secrets/firebase-project-id/versions/latest
+      env: 'FIREBASE_PROJECT_ID'
+    - versionName: projects/river-level-0/secrets/firebase-storage-bucket/versions/latest
+      env: 'FIREBASE_STORAGE_BUCKET'
+    - versionName: projects/river-level-0/secrets/firebase-messaging-sender-id/versions/latest
+      env: 'FIREBASE_MESSAGING_SENDER_ID'
+    - versionName: projects/river-level-0/secrets/firebase-app-id/versions/latest
+      env: 'FIREBASE_APP_ID'
+    - versionName: projects/river-level-0/secrets/api-base-url/versions/latest
+      env: 'API_BASE_URL'

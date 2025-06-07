@@ -108,8 +108,42 @@ Created artifact repo <https://console.cloud.google.com/artifacts/docker/river-l
 
 Start the Docker Desktop Apple app and login (see phone)
 
-Dockerize locally tested variant
-$ docker build --platform linux/amd64 -t rivers-lit .
+#### gcloud Command - Setup Secrets
+
+```bash
+# Ensure you are authenticated with gcloud and have selected the correct project
+# gcloud auth login
+# gcloud config set project YOUR_PROJECT_ID
+
+# Store each configuration value as a secret.
+# Extract these values from your .env.local.<name> file.
+
+gcloud secrets create firebase-api-key --replication-policy="automatic" --data-file=./.env.local.firebase_api_key
+gcloud secrets create firebase-auth-domain --replication-policy="automatic" --data-file=- <<< "river-level-0.firebaseapp.com"
+gcloud secrets create firebase-project-id --replication-policy="automatic" --data-file=- <<< "river-level-0"
+gcloud secrets create firebase-storage-bucket --replication-policy="automatic" --data-file=- <<< "river-level-0.firebasestorage.app"
+gcloud secrets create firebase-messaging-sender-id --replication-policy="automatic" --data-file=./.env.local.firebase_messaging_sender_id
+gcloud secrets create firebase-app-id --replication-policy="automatic" --data-file=./.env.local.firebase_app_id
+gcloud secrets create api-base-url --replication-policy="automatic" --data-file=- <<< "https://api.river.johnblaky.org"
+
+# Note: If a secret already exists and you want to add a new version, use:
+# gcloud secrets versions add firebase-api-key --data-file=- <<< "new-value""
+```
+
+Added roles to service account here
+<https://console.cloud.google.com/iam-admin/serviceaccounts/details/101520635860790731990/permissions?inv=1&invt=Abzcow&walkthrough_id=iam--create-service-account&project=river-level-0>
+
+```bash
+# Submit build from your local machine
+gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest
+```
+
+See builds at <https://console.cloud.google.com/cloud-build/builds?referrer=search&inv=1&invt=AbzdQA&walkthrough_id=iam--create-service-account&project=river-level-0>
+
+#### Dockerize the Flask app
+
+Replaced by cloudbuild.yaml gcloug builds command -> $ docker build --platform linux/amd64 -t rivers-lit .
+
 Note - the command here ^ and below use the default behavior that the latest tag is assumed without a tag in the commands. Error note - tried pushing the default Docker build and it wasn't accepted by Google b/c only Linux architecture is accepted, the linux tag above solved it.
 
 Optional - see images in Docker VS Code extension (or $ docker images). Notice the rivers-lit has a "latest" image now (if you saw the previous images that existed on the local machine).
@@ -121,7 +155,7 @@ If the docker image passes testing, move onto the next steps to deploy it.
 Note last Docker Image tag currently in the Google Cloud Artifacts <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?hl=en&inv=1&invt=AbzKVw&project=river-level-0>
 
 Tag the next (e.g. v1 -> v2) create docker image version to use in Cloud Run
-$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v4
+$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v5
 
 Push the created Docker image tag to the Artifact Registry
 $ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v4
@@ -199,7 +233,7 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Favorite charts pinned to top~~
 - Fix avatar not uploading and fix the position of the avatar and login
 - Allow user to save type of sort chosen (alphabetical vs current)
-- Verify aving chart positions
+- Verify saving chart positions
 - Allow manually setting timezone (default is use the client to set it)
 - Allow rearranging (arrows? drag them?) favorite charts pinned to top and save the new arrangement
 
