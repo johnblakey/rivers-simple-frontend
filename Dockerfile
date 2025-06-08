@@ -27,7 +27,7 @@ ENV VITE_API_BASE_URL=${API_BASE_URL_ARG}
 # Copy source
 COPY . .
 
-# Debugging - Check if variables are properly set
+# TODO - remove after Debugging - Check if variables are properly set!!!
 RUN echo "Build args received:"
 RUN echo "FIREBASE_API_KEY_ARG: ${FIREBASE_API_KEY_ARG}"
 RUN echo "Environment variables set:"
