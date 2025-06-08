@@ -60,7 +60,7 @@ Follow defaults
 See scripts in package.json
 $ npm run
 
-Createed package.json scripts
+Created package.json scripts
 
 ### Run Scripts
 
@@ -100,7 +100,7 @@ For production, use Vite production build vs development build. Note warning in 
 ### Build process
 
 Docker image should be lean and delete items not needed after setup (TODO - verify this)
-I use "server" to make assets avaialble to website in production build
+I use "server" to make assets available to website in production build
 
 ### Steps
 
@@ -134,7 +134,13 @@ gcloud secrets create api-base-url --replication-policy="automatic" --data-file=
 # gcloud secrets versions add firebase-api-key --data-file=- <<< "new-value""
 ```
 
-### IAM Notes
+### Check Secrets in Secret Manager
+
+Verify <https://console.firebase.google.com/u/0/project/river-level-0/settings/general/web:MjgyNjQyMmQtODhmMi00MjAzLTg1YWQtODY1NzNiNGVhMmUz> that the API key matches the .env.local.
+
+Verify <https://console.cloud.google.com/security/secret-manager?referrer=search&hl=en&inv=1&invt=AbzerQ&project=river-level-0> API key is here correctly
+
+### IAM
 
 There are service accounts and user accounts and Google Managed accounts.
 
@@ -147,6 +153,19 @@ TODO - is to reduce permission to the least amount of privilege needed.
 #### Verify IAM Account
 
 See the account in the Cloud Build logs here <https://console.cloud.google.com/cloud-build/builds;region=us-west2/ba8af067-4d3f-4521-83a6-2965d68dc055?chat=true&hl=en&inv=1&invt=Abzknw&project=river-level-0> > Execution details - Tab > see IAM account (service Google Managed account)
+
+See the roles attached to an IAM account (sometimes <name>@<project_id>.iam.gserviceaccount.com>)
+
+```bash
+gcloud projects get-iam-policy river-level-0 \
+  --flatten="bindings[].members" \
+  --format='table(bindings.role)' \
+  --filter="bindings.members:serviceAccount:cloud-build@river-level-0.iam.gserviceaccount.com"
+```
+
+#### Modify IAM Account or Create New IAM Account
+
+For service accounts go to Google Cloud console > river-levels-0 - project > IAM > Service Accounts > follow prompts to create a service account name > note the roles of the IAM account to copy > go to Permissions > Roles > type in name of role from docs or error messsage on role to add to then test if issue resolves. For example I had to use trial and error on cloudbuild.yaml deploy to see needed permissions. Annoying when a deployment takes a couple minutes between role tests.
 
 ### Build Push Deploy to Cloud Run
 
@@ -259,35 +278,33 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Make timezone change in chart.js based on client timezone~~
 - ~~Change ft3/s to cubic feet per second CFS~~
 - Use Apple style toggle for sorting vs button
+- Fix chart label overlap on mobile
 
 ### Authentication TODO
 
 - ~~Add user login capability (use Google Cloud authentication | Firebase | Datastore)~~
 - ~~Favorite charts pinned to top~~
-- Fix avatar not uploading and fix the position of the avatar and login
-- Allow user to save type of sort chosen (alphabetical vs current)
+- Fix avatar not uploading
 - Verify saving chart positions
 - Allow manually setting timezone (default is use the client to set it)
 - Allow rearranging (arrows? drag them?) favorite charts pinned to top and save the new arrangement
-- Can I reduce roles on Service accounts? <https://console.cloud.google.com/iam-admin/iam?inv=1&invt=AbzeuQ&project=river-level-0> and <https://console.cloud.google.com/iam-admin/serviceaccounts?inv=1&invt=AbzeuQ&project=river-level-0> theres an auto-generated account
-- Validate this from Claude - The Service Account Your Cloud Run Uses. Your Cloud Run service is running under the App Engine default service account (river-level-0@appspot.gserviceaccount.com), which has the Editor role. This role includes Firestore/Datastore permissions, so your app should be able to access Firestore without additional configuration.
+- Reduce roles on Service accounts by replacing with user created simplified service account <https://console.cloud.google.com/iam-admin/iam?inv=1&invt=AbzeuQ&project=river-level-0> and <https://console.cloud.google.com/iam-admin/serviceaccounts?inv=1&invt=AbzeuQ&project=river-level-0> theres an auto-generated account
 - Can I lock down APIs more?
 - I need to verify how to run local and test vs deploy to Cloud Run and test
 - Fix rivers.johnblakey.org, firebase auth error, check Cloud Run deployment, is the cloudbuild item deployed?
 
-Verify <https://console.firebase.google.com/u/0/project/river-level-0/settings/general/web:MjgyNjQyMmQtODhmMi00MjAzLTg1YWQtODY1NzNiNGVhMmUz> that the API key matches the .env.local.
-
-Vierify <https://console.cloud.google.com/security/secret-manager?referrer=search&hl=en&inv=1&invt=AbzerQ&project=river-level-0> API key is here correctly
-
 ### Long-term TODO
 
+- Allow user to save type of sort chosen (alphabetical vs current) - backend change needed
 - Add a form for users to submit river links
 - Create tailwind css
 - Change river-level file names or river-levels file names to rivers project
 - Simplify slug code
 - Simplify Lit Component
 - Simplify User Authentication
-- Simplify data.ts pulling data
+- Simplify data.ts pulling data (rename?)
+- Refactor utility files naming and scope
+- Use security recommendations here <https://owasp.org/www-project-top-ten/> to this project and add to mega-reference
 
 ### Production
 

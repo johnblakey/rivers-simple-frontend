@@ -56,5 +56,6 @@ availableSecrets:
       env: 'FIREBASE_APP_ID'
     - versionName: projects/river-level-0/secrets/api-base-url/versions/latest
       env: 'API_BASE_URL'
+      
 options:
   logging: CLOUD_LOGGING_ONLY
