@@ -77,6 +77,10 @@ Then run VSCode "Run and Debug" test with Chrome, works by pointing at Vite dev 
 
 If hitting the production API set env in Cloud Run to "development" vs "production" so that endpoint is available to local frontend.
 
+Modify the .env.local file ENV entry VITE_API_BASE_URL:
+production is <https://api.rivers.johnblakey.org>
+local version default is <todo_add_url>
+
 ## Vite
 
 <https://vite.dev/guide/>
@@ -119,6 +123,8 @@ Create secrets locally from files with individual lines of the secret and nothin
 No multi line files. See naming examples in the gcloud request. Also, verify correct secrets in the .env.local file.
 Note that Firebase secrets can be seen here <https://console.firebase.google.com/u/0/project/river-level-0/settings/general/web:MjgyNjQyMmQtODhmMi00MjAzLTg1YWQtODY1NzNiNGVhMmUz> Firebase > river-level-0 project (choose project) >  Project Overview - Gear Icon > Project Settings > note secrets should be the same as the .env.local file
 
+Initial Secrets Setup
+
 ```bash
 # Ensure you are authenticated with gcloud and have selected the correct project
 # gcloud auth login
@@ -126,7 +132,6 @@ Note that Firebase secrets can be seen here <https://console.firebase.google.com
 
 # Store each configuration value as a secret.
 # Extract these values from your .env.local.<name> file.
-
 gcloud secrets create firebase-api-key --replication-policy="automatic" --data-file=./.env.local.firebase_api_key
 gcloud secrets create firebase-auth-domain --replication-policy="automatic" --data-file=- <<< "river-level-0.firebaseapp.com"
 gcloud secrets create firebase-project-id --replication-policy="automatic" --data-file=- <<< "river-level-0"
@@ -134,22 +139,25 @@ gcloud secrets create firebase-storage-bucket --replication-policy="automatic" -
 gcloud secrets create firebase-messaging-sender-id --replication-policy="automatic" --data-file=./.env.local.firebase_messaging_sender_id
 gcloud secrets create firebase-app-id --replication-policy="automatic" --data-file=./.env.local.firebase_app_id
 # Production API URL
-gcloud secrets create api-base-url --replication-policy="automatic" --data-file=- <<< "https://api.river.johnblaky.org"
-
-# Note: If a secret already exists and you want to add a new version, use:
-# gcloud secrets versions add firebase-api-key --data-file=- <<< "new-value""
+gcloud secrets create api-base-url --replication-policy="automatic" --data-file=- <<< "https://api.rivers.johnblakey.org"
 ```
+
+TODO - verify, I deleted the secret then reuploaded. Now will deploy new version
+
+Note: If a secret already exists and you want to add a new version, modify the above or use the console.
+
+```bash
+# gcloud secrets versions add firebase-api-key --data-file=- <<< "new-value"
+```
+
+### Check Secrets in Secret Manager - Google Cloud
+
+Verify <https://console.cloud.google.com/security/secret-manager?referrer=search&hl=en&inv=1&invt=AbzerQ&project=river-level-0> API key is here correctly
 
 ### API Key Restrictions - Google Cloud
 
 Google Cloud > API & Services > Credentials > Browser Key vs Web Client (need to verify)
 <https://console.cloud.google.com/apis/credentials?chat=true&inv=1&invt=Abze3A&project=river-level-0>
-
-### Check Secrets in Secret Manager - Google Cloud
-
-Verify <https://console.firebase.google.com/u/0/project/river-level-0/settings/general/web:MjgyNjQyMmQtODhmMi00MjAzLTg1YWQtODY1NzNiNGVhMmUz> that the API key matches the .env.local.
-
-Verify <https://console.cloud.google.com/security/secret-manager?referrer=search&hl=en&inv=1&invt=AbzerQ&project=river-level-0> API key is here correctly
 
 ### How to pass secrets to Dockerfile
 

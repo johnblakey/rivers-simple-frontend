@@ -148,6 +148,7 @@ export class FavoriteButton extends LitElement {
     if (this.isLoading) return;
 
     this.isLoading = true;
+    const originalIsFavorite = this.isFavorite; // Store original state
     try {
       if (this.isFavorite) {
         await userPreferencesService.removeFavoriteRiver(this.siteCode);
@@ -155,7 +156,9 @@ export class FavoriteButton extends LitElement {
       } else {
         await userPreferencesService.addFavoriteRiver(this.siteCode);
         this.isFavorite = true;
-        // Dispatch a custom event to notify that favorites might have changed
+      }
+      // Dispatch event if the state actually changed successfully
+      if (originalIsFavorite !== this.isFavorite) {
         this.dispatchEvent(new CustomEvent('favorite-changed', {
           bubbles: true, // Allow event to bubble up the DOM tree
           composed: true // Allow event to cross shadow DOM boundaries
@@ -163,7 +166,7 @@ export class FavoriteButton extends LitElement {
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      // Optionally show user-friendly error message
+      this.isFavorite = originalIsFavorite; // Revert optimistic update on error
     } finally {
       this.isLoading = false;
     }
@@ -190,6 +193,11 @@ export class FavoriteButton extends LitElement {
   }
 
   render() {
+    // If there's no siteCode, don't render the button at all.
+    if (!this.siteCode) {
+      return html``;
+    }
+
     const buttonTitle = this.isFavorite
       ? `Remove ${this.riverName || 'river'} from favorites`
       : `Add ${this.riverName || 'river'} to favorites`;

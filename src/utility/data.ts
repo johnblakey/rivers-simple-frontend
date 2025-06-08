@@ -23,7 +23,17 @@ export interface RiverDetail {
   gaugeName: string; // The descriptive name of the gauge, often from the source system (e.g., USGS). Not used for querying river levels via site code.
 }
 
-const BASE_API_URL = "https://api.rivers.johnblakey.org";
+const BASE_API_URL = import.meta.env.VITE_API_BASE_URL;
+
+if (!BASE_API_URL) {
+  const errorMessage = `Missing API base URL for data fetching.
+Ensure the VITE_API_BASE_URL environment variable is set and accessible to the Vite build process
+(e.g., in .env files for local development, or as an ENV var in Docker during the build stage).`;
+  console.error(errorMessage);
+  // Throwing an error here will stop the data fetching functions from being used with an invalid state.
+  // This is critical as the application relies on this URL to function.
+  throw new Error(errorMessage);
+}
 
 /**
  * Helper function to fetch JSON data from a URL.
