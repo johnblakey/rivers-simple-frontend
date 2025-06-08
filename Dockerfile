@@ -22,6 +22,12 @@ ENV VITE_FIREBASE_APP_ID=$FIREBASE_APP_ID_ARG
 ENV VITE_API_BASE_URL=$API_BASE_URL_ARG
 # Copy source
 COPY . .
+
+# Temporary debugging - remove after fixing!!!
+RUN echo "FIREBASE_API_KEY_ARG: $FIREBASE_API_KEY_ARG"
+RUN echo "VITE_FIREBASE_API_KEY: $VITE_FIREBASE_API_KEY"
+RUN env | grep VITE
+
 # Build static site
 RUN npm run build:prod
 # ---------- Production Stage ----------

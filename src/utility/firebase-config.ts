@@ -13,7 +13,7 @@ export const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// DELETE AFTER Checking TEMPORARY DEBUG: Log the API key being used by the client
+// DELETE AFTER Checking TEMPORARY DEBUG: Log the API key being used by the client!!!
 console.log('DEBUG: VITE_FIREBASE_API_KEY received by client:', import.meta.env.VITE_FIREBASE_API_KEY);
 
 // For clearer error messages, check that essential Firebase config values are present.

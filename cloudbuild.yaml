@@ -35,6 +35,9 @@ steps:
       - '--image=us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:$SHORT_SHA'
       - '--region=us-west1'
       - '--allow-unauthenticated'
+      - '--memory=128Mi'
+      - '--min-instances=0'
+      - '--max-instances=100'
 
 availableSecrets:
   secretManager:
@@ -52,3 +55,4 @@ availableSecrets:
       env: 'FIREBASE_APP_ID'
     - versionName: projects/river-level-0/secrets/api-base-url/versions/latest
       env: 'API_BASE_URL'
+      

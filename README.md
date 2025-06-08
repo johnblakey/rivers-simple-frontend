@@ -133,6 +133,8 @@ gcloud secrets create api-base-url --replication-policy="automatic" --data-file=
 Added roles to service account here
 <https://console.cloud.google.com/iam-admin/serviceaccounts/details/101520635860790731990/permissions?inv=1&invt=Abzcow&walkthrough_id=iam--create-service-account&project=river-level-0>
 
+### Build Push Deploy to Cloud Run
+
 ```bash
 # Submit build from your local machine
 gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest
@@ -140,7 +142,19 @@ gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitution
 
 See builds at <https://console.cloud.google.com/cloud-build/builds?referrer=search&inv=1&invt=AbzdQA&walkthrough_id=iam--create-service-account&project=river-level-0>
 
-#### Dockerize the Flask app
+### Tagging
+
+If passing the test, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
+
+To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.4 > "Describe new features or bugfixes"
+
+Push created local tag to GitHub
+$  git push origin v0.1.4
+Note that the tag was pushed to GitHub
+
+TODO - can I tag what Cloud Build created with GitHub tag for tracking?
+
+#### Dockerize the Flask app (Archive)
 
 Replaced by cloudbuild.yaml gcloug builds command -> $ docker build --platform linux/amd64 -t rivers-lit .
 
@@ -176,7 +190,7 @@ If not passing, verify the same bug in local testing. Fix and start process agai
 
 If passing the test, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
 
-To creat the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.4 > "Describe new features or bugfixes"
+To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.4 > "Describe new features or bugfixes"
 
 Push created local tag to GitHub
 $  git push origin v0.1.4
