@@ -133,6 +133,7 @@ gcloud secrets create firebase-project-id --replication-policy="automatic" --dat
 gcloud secrets create firebase-storage-bucket --replication-policy="automatic" --data-file=- <<< "river-level-0.firebasestorage.app"
 gcloud secrets create firebase-messaging-sender-id --replication-policy="automatic" --data-file=./.env.local.firebase_messaging_sender_id
 gcloud secrets create firebase-app-id --replication-policy="automatic" --data-file=./.env.local.firebase_app_id
+# Production API URL
 gcloud secrets create api-base-url --replication-policy="automatic" --data-file=- <<< "https://api.river.johnblaky.org"
 
 # Note: If a secret already exists and you want to add a new version, use:

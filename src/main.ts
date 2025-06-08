@@ -2,7 +2,7 @@ import { getRiverDetails } from './utility/data';
 import type { RiverDetail } from './utility/data';
 import { RiverLevelChart } from './components/river-level-chart';
 import { slugify } from './utility/string-utils';
-import { FavoriteButton } from './components/firebase-button.ts'; // Import FavoriteButton
+import { FavoriteButton } from './components/favorite-button.ts'; // Import FavoriteButton
 import './utility/auth-ui'; // Import the auth UI component
 import { authService } from './utility/auth-service';
 
