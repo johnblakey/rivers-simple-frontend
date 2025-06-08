@@ -1,5 +1,6 @@
 # Local personal prompt files
 .prompts/
+.env.local.*
 
 # VS Code
 .vscode/
