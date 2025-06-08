@@ -11,8 +11,16 @@ class UserPreferencesService {
   private baseUrl: string;
 
   constructor() {
-    // Use environment variable for API base URL
-    this.baseUrl = import.meta.env.API_BASE_URL || 'http://localhost:8080';
+    const apiUrl = import.meta.env.VITE_API_BASE_URL;
+    if (!apiUrl) {
+      const errorMessage = `Missing API base URL.
+Ensure the VITE_API_BASE_URL environment variable is set and accessible to the Vite build process
+(e.g., in .env files for local development, or as an ENV var in Docker during the build stage).`;
+      console.error(errorMessage);
+      // Throwing an error here will stop the service from being initialized with an invalid state.
+      throw new Error(errorMessage);
+    }
+    this.baseUrl = apiUrl;
   }
 
   private async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {

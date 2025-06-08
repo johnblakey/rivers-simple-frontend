@@ -95,6 +95,11 @@ q + Enter
 
 For production, use Vite production build vs development build. Note warning in console goes away.
 
+## Firebase
+
+Add authorized domains for testing with Firebase authorization
+<https://console.firebase.google.com/u/0/project/river-level-0/authentication/settings>
+
 ## Dockerize Frontend and Deploy to Google Cloud Run
 
 ### Build process
@@ -134,11 +139,20 @@ gcloud secrets create api-base-url --replication-policy="automatic" --data-file=
 # gcloud secrets versions add firebase-api-key --data-file=- <<< "new-value""
 ```
 
-### Check Secrets in Secret Manager
+### API Key Restrictions - Google Cloud
+
+Google Cloud > API & Services > Credentials > Browser Key vs Web Client (need to verify)
+<https://console.cloud.google.com/apis/credentials?chat=true&inv=1&invt=Abze3A&project=river-level-0>
+
+### Check Secrets in Secret Manager - Google Cloud
 
 Verify <https://console.firebase.google.com/u/0/project/river-level-0/settings/general/web:MjgyNjQyMmQtODhmMi00MjAzLTg1YWQtODY1NzNiNGVhMmUz> that the API key matches the .env.local.
 
 Verify <https://console.cloud.google.com/security/secret-manager?referrer=search&hl=en&inv=1&invt=AbzerQ&project=river-level-0> API key is here correctly
+
+### How to pass secrets to Dockerfile
+
+<https://medium.com/@fermey.paul/how-to-load-environment-variables-from-secret-manager-during-build-time-in-cloud-build-540b2bbfaec6>
 
 ### IAM
 
