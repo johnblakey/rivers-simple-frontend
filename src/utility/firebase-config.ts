@@ -13,9 +13,6 @@ export const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// TODO DELETE AFTER Checking TEMPORARY DEBUG: Log the API key being used by the client!!!
-console.log('DEBUG: VITE_FIREBASE_API_KEY received by client:', import.meta.env.VITE_FIREBASE_API_KEY);
-
 // For clearer error messages, check that essential Firebase config values are present.
 // Firebase SDK might throw its own errors, but this provides more direct feedback.
 const essentialKeysAndCorrespondingViteVars: {key: keyof typeof firebaseConfig, viteVar: string}[] = [

@@ -27,13 +27,6 @@ ENV VITE_API_BASE_URL=${API_BASE_URL_ARG}
 # Copy source
 COPY . .
 
-# TODO - remove after Debugging - Check if variables are properly set!!!
-RUN echo "Build args received:"
-RUN echo "FIREBASE_API_KEY_ARG: ${FIREBASE_API_KEY_ARG}"
-RUN echo "Environment variables set:"
-RUN echo "VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}"
-RUN env | grep VITE || echo "No VITE variables found"
-
 # Build static site
 RUN npm run build:prod
 
