@@ -203,15 +203,30 @@ See builds and logging at <https://console.cloud.google.com/cloud-build/builds?r
 
 If passing tests, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
 
-To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.4 > "Describe new features or bugfixes"
+To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.5 > "Describe new features or bugfixes"
 
-Push created local tag to GitHub
-$  git push origin v0.1.4
+Push created local tag to GitHub - Manually
+$  git push origin v0.1.5
 Note that the tag was pushed to GitHub
 
-TODO - can I tag what Cloud Build created with GitHub tag for tracking?
+Create Docker tag
+TODO - find the exact docker image used in Cloud Run instance
+$ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.5
+Push Docker tag
+$ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.5
 
-#### Dockerize the Flask app (Archive)
+Verify the rivers-lit tag results here
+<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=AbzmlA&project=river-level-0>
+
+Check backend rivers-flask that it is in prod and not open dangerously in dev
+<https://console.cloud.google.com/run/detail/us-west1/rivers-lit/revisions?inv=1&invt=AbzeuQ&project=river-level-0>
+
+Cleanup - delete unnecessary images and Cloud run revisions
+<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1?inv=1&invt=AbzmlA&project=river-level-0>
+
+Congrats, you now modified the rivers frontend, tested it, and deployed it with good tags for tracking in GitHub and Google Cloud.
+
+#### Deprecated - Dockerize the Flask app (TODO - Archive)
 
 Replaced by cloudbuild.yaml gcloug builds command -> $ docker build --platform linux/amd64 -t rivers-lit .
 
@@ -307,8 +322,9 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 
 - ~~Add user login capability (use Google Cloud authentication | Firebase | Datastore)~~
 - ~~Favorite charts pinned to top~~
-- Fix avatar not uploading
-- Verify saving chart positions
+- ~~Fix avatar not uploading~~
+- ~~Verify saving chart positions~~
+- Change look of my button to the Google Login button
 - Allow manually setting timezone (default is use the client to set it)
 - Allow rearranging (arrows? drag them?) favorite charts pinned to top and save the new arrangement
 - Reduce roles on Service accounts by replacing with user created simplified service account <https://console.cloud.google.com/iam-admin/iam?inv=1&invt=AbzeuQ&project=river-level-0> and <https://console.cloud.google.com/iam-admin/serviceaccounts?inv=1&invt=AbzeuQ&project=river-level-0> theres an auto-generated account
@@ -331,7 +347,7 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 
 ### Production
 
-- Verify I put Lit in production mode by using | $ npm run prod:build | in the Dockerfile
-- Verify that Cloud Run backend deployment is set to production env after frontend deployment
+- Verify I put Lit in production mode by using | $ npm run prod:build | in the Dockerfile (is there a waring in the browser console about it?)
+- Verify that Cloud Run backend deployment is set to production env after frontend deployment (no warning - verify manually <https://console.cloud.google.com/run/detail/us-west1/rivers-flask/revisions?project=river-level-0&inv=1&invt=AbzmZg>)
 - Apply principle of least privilege to Google Service Accounts for Cloud Run
 - Simplify CORS and development, currently development Env is required in Cloud Run to allow test frontends to access river levels, but a config in the frontend (.env.local (see comments there)) is needed to manually point to a local backend API instance, need to sort out, does not make sense
