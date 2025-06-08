@@ -1,68 +1,51 @@
 // firebase-config.ts
-import { initializeApp } from 'firebase/app';
-import type { FirebaseOptions } from 'firebase/app';
+import { initializeApp, type FirebaseOptions } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
-// Define the shape of the runtime configuration object that will be injected into window
-declare global {
-  interface Window {
-    runtimeConfig?: {
-      FIREBASE_API_KEY?: string;
-      FIREBASE_AUTH_DOMAIN?: string;
-      FIREBASE_PROJECT_ID?: string;
-      FIREBASE_STORAGE_BUCKET?: string;
-      FIREBASE_MESSAGING_SENDER_ID?: string;
-      FIREBASE_APP_ID?: string;
-      // API_BASE_URL is handled in user-preferences-service, but could also be here
-    };
-  }
-}
-
-// Helper function to get config values
-// Prioritizes runtime config, then Vite env vars (prefixed with VITE_), then undefined.
-function getConfigValue(runtimeKey: keyof NonNullable<Window['runtimeConfig']>, viteKey: string): string | undefined {
-  if (typeof window !== 'undefined' && window.runtimeConfig && window.runtimeConfig[runtimeKey]) {
-    return window.runtimeConfig[runtimeKey];
-  }
-  // For Vite, environment variables must be prefixed with VITE_ to be exposed on import.meta.env
-  // Ensure your .env.local uses VITE_FIREBASE_API_KEY etc. for local development.
-  if (import.meta.env[viteKey]) {
-    return import.meta.env[viteKey] as string;
-  }
-  return undefined;
-}
-
-// Firebase configuration mapping
-const firebaseConfigMapping = {
-  apiKey: { runtimeKey: 'FIREBASE_API_KEY', viteKey: 'VITE_FIREBASE_API_KEY' },
-  authDomain: { runtimeKey: 'FIREBASE_AUTH_DOMAIN', viteKey: 'VITE_FIREBASE_AUTH_DOMAIN' },
-  projectId: { runtimeKey: 'FIREBASE_PROJECT_ID', viteKey: 'VITE_FIREBASE_PROJECT_ID' },
-  storageBucket: { runtimeKey: 'FIREBASE_STORAGE_BUCKET', viteKey: 'VITE_FIREBASE_STORAGE_BUCKET' },
-  messagingSenderId: { runtimeKey: 'FIREBASE_MESSAGING_SENDER_ID', viteKey: 'VITE_FIREBASE_MESSAGING_SENDER_ID' },
-  appId: { runtimeKey: 'FIREBASE_APP_ID', viteKey: 'VITE_FIREBASE_APP_ID' },
+// Vite exposes VITE_ prefixed env variables from .env files or build environment
+// on import.meta.env.
+export const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const firebaseConfig: Partial<FirebaseOptions> = {};
-const missingConfigKeys: string[] = [];
+// DELETE AFTER Checking TEMPORARY DEBUG: Log the API key being used by the client
+console.log('DEBUG: VITE_FIREBASE_API_KEY received by client:', import.meta.env.VITE_FIREBASE_API_KEY);
 
-for (const key in firebaseConfigMapping) {
-  const configKeys = firebaseConfigMapping[key as keyof typeof firebaseConfigMapping];
-  const value = getConfigValue(configKeys.runtimeKey as keyof NonNullable<Window['runtimeConfig']>, configKeys.viteKey);
-  firebaseConfig[key as keyof FirebaseOptions] = value;
-  if (!value) {
-    // Log the expected environment variable name (runtimeKey is more generic here)
-    missingConfigKeys.push(configKeys.runtimeKey);
-  }
+// For clearer error messages, check that essential Firebase config values are present.
+// Firebase SDK might throw its own errors, but this provides more direct feedback.
+const essentialKeysAndCorrespondingViteVars: {key: keyof typeof firebaseConfig, viteVar: string}[] = [
+    { key: 'apiKey', viteVar: 'VITE_FIREBASE_API_KEY' },
+    { key: 'authDomain', viteVar: 'VITE_FIREBASE_AUTH_DOMAIN' },
+    { key: 'projectId', viteVar: 'VITE_FIREBASE_PROJECT_ID' },
+    { key: 'appId', viteVar: 'VITE_FIREBASE_APP_ID' },
+    // Add other keys like 'storageBucket' or 'messagingSenderId' if they are
+    // strictly essential for your application's core functionality.
+];
+
+const missingVars: string[] = [];
+for (const item of essentialKeysAndCorrespondingViteVars) {
+    if (!firebaseConfig[item.key]) {
+        missingVars.push(item.viteVar);
+    }
 }
 
-if (missingConfigKeys.length > 0) {
-  const errorMessage = `Missing Firebase configuration for: ${missingConfigKeys.join(', ')}. Ensure these are set as environment variables in your Cloud Run service (or as VITE_ prefixed vars in .env.local for development).`;
+if (missingVars.length > 0) {
+  const errorMessage = `Missing Firebase configuration for: ${missingVars.join(', ')}.
+Ensure these VITE_ prefixed environment variables are set and accessible to the Vite build process
+(e.g., in .env files for local development, or as ENV vars in Docker/Cloud Run).`;
   console.error(errorMessage);
   throw new Error(errorMessage);
 }
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig as FirebaseOptions); // Cast as FirebaseOptions because SDK expects all keys to be present
+// The firebaseConfig object might have undefined values for non-essential keys,
+// which is acceptable by FirebaseOptions. Essential keys are checked above.
+const app = initializeApp(firebaseConfig as FirebaseOptions);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);

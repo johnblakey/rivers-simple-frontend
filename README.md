@@ -236,6 +236,15 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - Verify saving chart positions
 - Allow manually setting timezone (default is use the client to set it)
 - Allow rearranging (arrows? drag them?) favorite charts pinned to top and save the new arrangement
+- Can I reduce roles on Service accounts? <https://console.cloud.google.com/iam-admin/iam?inv=1&invt=AbzeuQ&project=river-level-0> and <https://console.cloud.google.com/iam-admin/serviceaccounts?inv=1&invt=AbzeuQ&project=river-level-0> theres an auto-generated account
+- Validate this from Claude - The Service Account Your Cloud Run Uses. Your Cloud Run service is running under the App Engine default service account (river-level-0@appspot.gserviceaccount.com), which has the Editor role. This role includes Firestore/Datastore permissions, so your app should be able to access Firestore without additional configuration.
+- Can I lock down APIs more?
+- I need to verify how to run local and test vs deploy to Cloud Run and test
+- Fix rivers.johnblakey.org, firebase auth error, check Cloud Run deployment, is the cloudbuild item deployed?
+
+Verify <https://console.firebase.google.com/u/0/project/river-level-0/settings/general/web:MjgyNjQyMmQtODhmMi00MjAzLTg1YWQtODY1NzNiNGVhMmUz> that the API key matches the .env.local.
+
+Vierify <https://console.cloud.google.com/security/secret-manager?referrer=search&hl=en&inv=1&invt=AbzerQ&project=river-level-0> API key is here correctly
 
 ### Long-term TODO
 
