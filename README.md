@@ -108,7 +108,11 @@ Created artifact repo <https://console.cloud.google.com/artifacts/docker/river-l
 
 Start the Docker Desktop Apple app and login (see phone)
 
-#### gcloud Command - Setup Secrets
+#### Setup Secrets
+
+Create secrets locally from files with individual lines of the secret and nothing else.
+No multi line files. See naming examples in the gcloud request. Also, verify correct secrets in the .env.local file.
+Note that Firebase secrets can be seen here <https://console.firebase.google.com/u/0/project/river-level-0/settings/general/web:MjgyNjQyMmQtODhmMi00MjAzLTg1YWQtODY1NzNiNGVhMmUz> Firebase > river-level-0 project (choose project) >  Project Overview - Gear Icon > Project Settings > note secrets should be the same as the .env.local file
 
 ```bash
 # Ensure you are authenticated with gcloud and have selected the correct project
@@ -130,8 +134,19 @@ gcloud secrets create api-base-url --replication-policy="automatic" --data-file=
 # gcloud secrets versions add firebase-api-key --data-file=- <<< "new-value""
 ```
 
-Added roles to service account here
-<https://console.cloud.google.com/iam-admin/serviceaccounts/details/101520635860790731990/permissions?inv=1&invt=Abzcow&walkthrough_id=iam--create-service-account&project=river-level-0>
+### IAM Notes
+
+There are service accounts and user accounts and Google Managed accounts.
+
+To see accounts go here > <https://console.cloud.google.com/iam-admin/iam?inv=1&invt=AbzeuQ&project=river-level-0> IAM tab > Checkbox (Include Google Managed accounts) to see default Google accounts used.
+
+Create a new service account that is named and described on what it does. Then point Cloud Build (or any tool) to use the new account vs the original default account. Test what minimal roles are needed.
+
+TODO - is to reduce permission to the least amount of privilege needed.
+
+#### Verify IAM Account
+
+See the account in the Cloud Build logs here <https://console.cloud.google.com/cloud-build/builds;region=us-west2/ba8af067-4d3f-4521-83a6-2965d68dc055?chat=true&hl=en&inv=1&invt=Abzknw&project=river-level-0> > Execution details - Tab > see IAM account (service Google Managed account)
 
 ### Build Push Deploy to Cloud Run
 
@@ -140,11 +155,11 @@ Added roles to service account here
 gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest
 ```
 
-See builds at <https://console.cloud.google.com/cloud-build/builds?referrer=search&inv=1&invt=AbzdQA&walkthrough_id=iam--create-service-account&project=river-level-0>
+See builds and logging at <https://console.cloud.google.com/cloud-build/builds?referrer=search&inv=1&invt=AbzdQA&walkthrough_id=iam--create-service-account&project=river-level-0>
 
 ### Tagging
 
-If passing the test, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
+If passing tests, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
 
 To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-backend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.4 > "Describe new features or bugfixes"
 
@@ -208,7 +223,7 @@ Cleanup - delete old artifacts in the Google Cloud repo, you pay for storage <ht
 
 Congrats, you now modified the rivers frontend, tested it, and deployed it with good tags for tracking in GitHub and Google Cloud.
 
-## Docker Debugging
+## Local Docker Debugging
 
 TODO - document how to debug Docker apps
 Set PORT and run the Docker container
@@ -217,8 +232,12 @@ Read the output to know how to access the website with the URL
 
 ## Cloud Run
 
-Use Cloud Run custom domains to take domain in Squarespace and host the new Cloud Run instance
+Use Cloud Run > Custom domains - to take domain in Squarespace and host the new Cloud Run instance
 with a new subdomain
+
+### Deployed Cloud Run Debugging
+
+Add debugging statements into configs and Dockerfile then see results in logs and the browser
 
 ### Custom Domains
 

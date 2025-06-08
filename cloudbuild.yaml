@@ -1,3 +1,4 @@
+serviceAccount: 'projects/river-level-0/serviceAccounts/cloud-build-river-level-0@river-level-0.iam.gserviceaccount.com'
 steps:
   # Build with secrets from Secret Manager
   - name: 'gcr.io/cloud-builders/docker'
@@ -55,4 +56,5 @@ availableSecrets:
       env: 'FIREBASE_APP_ID'
     - versionName: projects/river-level-0/secrets/api-base-url/versions/latest
       env: 'API_BASE_URL'
-      
+options:
+  logging: CLOUD_LOGGING_ONLY
