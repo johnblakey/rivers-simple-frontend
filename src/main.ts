@@ -12,7 +12,6 @@ let currentSortOrder: 'alphabetical' | 'runnable' | 'favorites' = 'alphabetical'
 let allRiverDetails: RiverDetail[] = [];
 let chartsContainer: HTMLDivElement | null = null;
 let sortButton: HTMLButtonElement | null = null;
-let authContainer: HTMLDivElement | null = null;
 
 async function initializeApp() {
   const appHost = document.getElementById('charts-host');
