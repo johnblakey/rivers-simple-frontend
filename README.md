@@ -205,7 +205,12 @@ See builds and logging at <https://console.cloud.google.com/cloud-build/builds?r
 
 ### Tagging
 
-If passes initial test, go into the cloud console > artifact registry > rivers-lit > add tag to "Latest" tag > v6
+#### Initial v1 Tag
+
+<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=AbznXQ&project=river-level-0>
+If passes initial test, go into the cloud console > artifact registry > rivers-lit > add tag to "Latest" tag > v7
+
+#### GitHub v0.1.0 Tag
 
 If passing tests, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
 
