@@ -22,14 +22,15 @@ async function initializeApp() {
     return;
   }
 
-  appHost.innerHTML = '';
-
-  // Create auth container and add auth UI
-  authContainer = document.createElement('div');
-  authContainer.id = 'auth-container';
-  const authUI = document.createElement('auth-ui');
-  authContainer.appendChild(authUI);
-  appHost.appendChild(authContainer);
+  // Setup Auth UI in the header
+  const headerAuthContainer = document.getElementById('auth-container');
+  if (headerAuthContainer) {
+    const authUI = document.createElement('auth-ui');
+    headerAuthContainer.innerHTML = ''; // Clear any placeholder
+    headerAuthContainer.appendChild(authUI);
+  } else {
+    console.warn('#auth-container element not found in the header.');
+  }
 
   // Setup sort button
   sortButton = document.getElementById('sort-toggle') as HTMLButtonElement;
@@ -39,6 +40,7 @@ async function initializeApp() {
   }
 
   // Create charts container
+  appHost.innerHTML = ''; // Clear appHost after auth UI is potentially set up elsewhere
   chartsContainer = document.createElement('div');
   appHost.appendChild(chartsContainer);
 

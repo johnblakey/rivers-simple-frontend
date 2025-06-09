@@ -17,15 +17,28 @@ main {
   border-radius: 8px;
 }
 
+/* Container for H1 and Beta tag */
+.main-title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px; /* Adjust as needed, was on h1 */
+}
+
+.main-title-container h1 {
+  margin-bottom: 0; /* Handled by container now */
+  text-align: left; /* Override general h1 style if it was centered */
+}
+
 h1, h2 {
   color: #2c3e50; /* A darker, slightly desaturated blue */
   margin-top: 0;
 }
 
 h1 {
-  text-align: center;
+  /* text-align: center; /* Centering handled by main or specific containers if needed */
   margin-bottom: 18px;  /* Less space below the title */
-  font-size: 2.2em;     /* Slightly smaller */
+  font-size: 2.2em;
 }
 
 h2 {
@@ -91,8 +104,8 @@ h2 {
   width: auto; /* Maintain aspect ratio */
 }
 
-/* Beta tag in header */
-.beta-tag-header {
+/* Beta tag next to main H1 title */
+.beta-tag-main {
   padding: 4px 8px;
   background-color: #ffc107; /* Amber/yellow for beta */
   color: #333; /* Dark text for contrast */
@@ -100,6 +113,7 @@ h2 {
   font-weight: bold;
   border-radius: 4px;
   text-transform: uppercase;
+  white-space: nowrap; /* Prevents wrapping if space is tight */
 }
 
 /* Basic responsive adjustments */

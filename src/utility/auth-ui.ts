@@ -16,11 +16,8 @@ export class AuthUI extends LitElement {
 
   static styles = css`
     :host {
-      display: block;
-      padding: 1rem;
-      background: #f8f9fa;
-      border-radius: 8px;
-      margin-bottom: 1rem;
+      display: flex; /* Ensures the component aligns well in a flex container like the nav bar */
+      align-items: center;
     }
 
     .auth-container {
@@ -46,12 +43,12 @@ export class AuthUI extends LitElement {
 
     .user-name {
       font-weight: 500;
-      color: #333;
+      color: #ffffff; /* Changed for visibility on dark nav background */
     }
 
     .user-email {
       font-size: 0.875rem;
-      color: #666;
+      color: #e0e0e0; /* Changed for visibility on dark nav background */
     }
 
     .auth-button {
@@ -173,7 +170,6 @@ export class AuthUI extends LitElement {
 
     return html`
       <div class="auth-container">
-        <div>Sign in to save your favorite rivers</div>
         <button
           class="auth-button"
           @click=${this.handleSignIn}
