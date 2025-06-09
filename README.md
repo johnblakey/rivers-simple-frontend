@@ -201,6 +201,8 @@ See builds and logging at <https://console.cloud.google.com/cloud-build/builds?r
 
 ### Tagging
 
+If passes initial test, go into the cloud console > artifact registry > rivers-lit > add tag to "Latest" tag > v6
+
 If passing tests, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
 
 To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-frontend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.5 > "Describe new features or bugfixes"

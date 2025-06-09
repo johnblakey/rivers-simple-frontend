@@ -183,3 +183,30 @@ footer {
     margin-right: 0;
   }
 }
+
+/* Styles for the sort toggle button, mimicking Google sign-in button */
+#sort-toggle {
+  background: #4285f4; /* Google button background from auth-ui.ts */
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem; /* Matches .auth-button padding */
+  border-radius: 4px;   /* Matches .auth-button border-radius */
+  cursor: pointer;
+  font-size: 0.875rem;  /* Matches .auth-button font-size */
+  display: inline-flex; /* Use inline-flex for alignment if icons are used */
+  align-items: center;
+  justify-content: center; /* Center text */
+  gap: 0.5rem;          /* Matches .auth-button gap, for potential icons */
+  transition: background-color 0.2s; /* Matches .auth-button transition */
+  text-decoration: none;
+  font-weight: 500;      /* Common font-weight for buttons */
+}
+
+#sort-toggle:hover {
+  background: #3367d6; /* Matches .auth-button:hover background */
+}
+
+#sort-toggle:disabled {
+  background: #ccc;      /* Matches .auth-button:disabled background */
+  cursor: not-allowed;   /* Matches .auth-button:disabled cursor */
+}
