@@ -44,5 +44,4 @@ USER appuser
 
 EXPOSE ${PORT:-3000}
 
-# Serve with SPA support (handles client-side routing)
-CMD ["serve", "dist", "-s"]
+CMD ["serve", "dist"]
