@@ -39,9 +39,11 @@ steps:
       - '--image=us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:$SHORT_SHA'
       - '--region=us-west1'
       - '--allow-unauthenticated'
+      - '--cpu=1'
       - '--memory=128Mi'
       - '--min-instances=0'
-      - '--max-instances=100'
+      - '--max-instances=10'
+      - '--concurrency=80'
 
 availableSecrets:
   secretManager:

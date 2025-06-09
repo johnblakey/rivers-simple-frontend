@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 # Set build-time environment variables (Firebase config, API URLs, etc.)
 ARG FIREBASE_API_KEY_ARG

@@ -1,4 +1,4 @@
-import './src/utility/auth-ui'; // Import the auth UI component
+import './utility/auth-ui'; // Import the auth UI component
 
 // Setup Auth UI in the header for the About page
 document.addEventListener('DOMContentLoaded', () => {
