@@ -1,6 +1,10 @@
 /* eslint-env node */
 /* global process */ // Add this if 'eslint-env node' is not fully effective for 'process' in your ESLint setup
 import { defineConfig } from 'vite';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // VITE_ prefixed environment variables are automatically loaded by Vite.
 // For the proxy target, we use process.env.VITE_API_BASE_URL, which should be
@@ -21,6 +25,14 @@ export default defineConfig(() => {
           target: process.env.VITE_API_BASE_URL,
           changeOrigin: true, // Necessary for virtual hosted sites and CORS
           rewrite: (path) => path.replace(/^\/api_proxy/, ''), // Remove the /api_proxy prefix
+        },
+      },
+    },
+    build: {
+      rollupOptions: {
+        input: {
+          main: resolve(__dirname, 'index.html'),
+          about: resolve(__dirname, 'public/about.html'), // Correct path to about.html
         },
       },
     },

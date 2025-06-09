@@ -30,6 +30,13 @@ COPY . .
 # Build static site
 RUN npm run build:prod
 
+# Ensure the processed about.html is served:
+# Vite processes public/about.html (specified as an input in vite.config.js)
+# and outputs it to dist/public/about.html.
+# Vite also copies the original public/about.html to dist/about.html (unprocessed).
+# This move ensures the processed version is at dist/about.html, overwriting the unprocessed one.
+RUN if [ -f /app/dist/public/about.html ]; then mv -f /app/dist/public/about.html /app/dist/about.html; fi
+
 # ---------- Production Stage ----------
 FROM node:20-alpine AS production
 
