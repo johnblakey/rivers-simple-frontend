@@ -2,6 +2,10 @@
 
 Simple HTML, CSS, TypeScript for rivers website <https://rivers.johnblakey.org/>
 
+## Project Goals
+
+Create a dashboard that is flexible and simple enough to keep adding whitewater features.
+
 ## Setup TypeScript Project
 
 Summary: plan to use the MDN recommended toolchain and coding style for beginners

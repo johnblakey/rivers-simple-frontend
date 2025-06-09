@@ -1,19 +1,12 @@
 <footer>
   <div class="footer-content">
-    <a href="https://waterservices.usgs.gov/" target="_blank" rel="noopener noreferrer" class="footer-link usgs-link">
-      United States Geological Survey (USGS) Powered.
-    </a>
-    <p class="feedback-email">Questions? Email me at <a href="mailto:johnblakeyorg@gmail.com">johnblakeyorg@gmail.com</a></p>
+    <p>Data sourced from USGS. <a href="https://waterservices.usgs.gov/rest/IV-Service.html" target="_blank" rel="noopener noreferrer" class="footer-link usgs-link">USGS Water Services</a>.</p>
+    <p class="feedback-email">Feedback: <a href="mailto:feedback@rivers-project.com">feedback@rivers-project.com</a></p>
   </div>
   <div class="footer-bottom-nav">
-    <a href="/">
-      <img src="/river-level-logo-tiny.png" alt="River Level Logo" class="footer-logo" />
-    </a>
-    <a href="/">Home</a> | <a href="/about.html">About</a> | <span id="footer-year"></span> Rivers Project
+    <img src="/river-level-logo-tiny.png" alt="Logo" class="footer-logo">
+    <span>&copy; <script>document.write(new Date().getFullYear())</script> Rivers Project <sup>Beta</sup>. All rights reserved.</span>
+    <a href="/">Home</a>
+    <a href="/about.html">About</a>
   </div>
 </footer>
-<script>
-  if (document.getElementById('footer-year')) {
-    document.getElementById('footer-year').textContent = new Date().getFullYear();
-  }
-</script>
