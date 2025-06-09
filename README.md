@@ -229,7 +229,7 @@ $ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v
 Verify the rivers-lit tag results here
 <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=AbzmlA&project=river-level-0>
 
-Check backend rivers-flask that it is in prod and not open dangerously in dev
+Check backend rivers-lit that it is in prod and not open dangerously in dev
 <https://console.cloud.google.com/run/detail/us-west1/rivers-lit/revisions?inv=1&invt=AbzeuQ&project=river-level-0>
 
 Cleanup - delete unnecessary images and Cloud run revisions

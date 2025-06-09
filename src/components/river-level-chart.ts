@@ -161,6 +161,13 @@ export class RiverLevelChart extends LitElement {
     return unitCode || "N/A";
   }
 
+  private getShortDisplayUnit(unitCode: string | undefined): string {
+    if (unitCode === 'ft3/s') {
+      return 'CFS';
+    }
+    return unitCode || "N/A";
+  }
+
   private renderChart(): void {
     if (this.isLoading || this.error || !this.levels.length) {
       this.destroyChart();
@@ -201,7 +208,10 @@ export class RiverLevelChart extends LitElement {
   private buildChartConfig(chartData: ChartData): ChartConfiguration {
     const { lowAdvisedCFS: low, highAdvisedCFS: high } = this.riverDetail || {};
     const latest = this.levels[this.levels.length - 1];
-    const currentUnitDisplay = this.getDisplayUnit(latest?.unitCode);
+
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 500;
+    const unitForDisplay = isMobile ? this.getShortDisplayUnit(latest?.unitCode) : this.getDisplayUnit(latest?.unitCode);
+    const subtitleFontSize = isMobile ? 12 : 14;
 
     return {
       type: "line",
@@ -226,7 +236,7 @@ export class RiverLevelChart extends LitElement {
             title: { display: true, text: "Time" },
           },
           y: {
-            title: { display: true, text: `${currentUnitDisplay}` },
+            title: { display: true, text: unitForDisplay },
             grace: "5%",
           },
         },
@@ -234,9 +244,9 @@ export class RiverLevelChart extends LitElement {
           legend: { display: false },
           subtitle: {
             display: !!latest,
-            text: latest ? `Current Flow: ${latest.value} ${currentUnitDisplay}` : "",
+            text: latest ? `Current Flow: ${latest.value} ${unitForDisplay}` : "",
             color: latest ? getCurrentLevelColor(latest.value, low, high) : CHART_COLORS.text.subtitleDefault,
-            font: { size: 14, weight: "bold" },
+            font: { size: subtitleFontSize, weight: "bold" },
             padding: { bottom: 10 },
           },
           annotation: {
