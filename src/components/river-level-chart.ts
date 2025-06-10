@@ -58,8 +58,36 @@ export class RiverLevelChart extends LitElement {
       border-bottom: 1px solid #eee;
     }
     .details p {
-      margin: 4px 0;
-      font-size: 0.9em;
+      margin: 8px 0; /* Increased vertical margin */
+      font-size: 0.95em; /* Slightly larger for readability */
+      color: #455a64; /* Softer, modern dark gray/blue */
+      line-height: 1.5;
+    }
+    .details strong {
+      color: #263238; /* Darker for emphasis */
+      font-weight: 600;
+    }
+    .details a {
+      color: #007bff; /* Modern blue for links */
+      text-decoration: none;
+      font-weight: 500;
+      padding-bottom: 1px; /* Space for the border */
+      border-bottom: 1px solid transparent; /* Prepare for hover effect */
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .details a:hover, .details a:focus {
+      color: #0056b3; /* Darker blue on hover */
+      border-bottom-color: #0056b3; /* Show underline effect with border */
+    }
+
+    .details-below { /* Style for the section below the chart */
+      margin-top: 16px; /* Add some space above this section */
+    }
+    .details-below p {
+      margin: 8px 0;
+      font-size: 0.95em;
+      color: #455a64;
+      line-height: 1.5;
     }
     canvas {
       max-width: 100%;
@@ -72,6 +100,23 @@ export class RiverLevelChart extends LitElement {
     .no-data {
       color: #757575;
       font-style: italic;
+    }
+
+    .details-below strong {
+      color: #263238;
+      font-weight: 600;
+    }
+    .details-below a {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: 500;
+      padding-bottom: 1px;
+      border-bottom: 1px solid transparent;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .details-below a:hover, .details-below a:focus {
+      color: #0056b3;
+      border-bottom-color: #0056b3;
     }
 
     @media (max-width: 768px) {
