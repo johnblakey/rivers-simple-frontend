@@ -6,6 +6,11 @@ Simple HTML, CSS, TypeScript for rivers website <https://rivers.johnblakey.org/>
 
 Create a dashboard that is flexible and simple enough to keep adding whitewater features.
 
+## Google Analytics 4
+
+GA4 Stream added
+<https://analytics.google.com/analytics/web/#/a204943788p492276620/admin/streams/table/>
+
 ## Setup TypeScript Project
 
 Summary: plan to use the MDN recommended toolchain and coding style for beginners
