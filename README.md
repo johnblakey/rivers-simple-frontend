@@ -215,7 +215,7 @@ See builds and logging at <https://console.cloud.google.com/cloud-build/builds?r
 #### Initial v1 Tag
 
 <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=AbznXQ&project=river-level-0>
-If passes initial test, go into the cloud console > artifact registry > rivers-lit > add tag to "Latest" tag > v8
+If passes initial test, go into the cloud console > artifact registry > rivers-lit > add tag to "Latest" tag > v18
 
 #### GitHub v0.1.0 Tag
 

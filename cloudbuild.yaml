@@ -44,6 +44,7 @@ steps:
       - '--min-instances=0'
       - '--max-instances=10'
       - '--concurrency=80'
+      - '--timeout=300'
 
 availableSecrets:
   secretManager:
