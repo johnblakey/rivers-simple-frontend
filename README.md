@@ -6,7 +6,10 @@ Simple HTML, CSS, TypeScript for rivers website <https://rivers.johnblakey.org/>
 
 Create a dashboard that is flexible and simple enough to keep adding whitewater features.
 
-## Google Analytics 4
+## Google Analytics 4 (GA4)
+
+Simple Engagement Report for rivers.johnblakey.org
+<https://analytics.google.com/analytics/web/#/p492276620/reports/reportinghub?params=_u..nav%3Dmaui>
 
 GA4 Stream added
 <https://analytics.google.com/analytics/web/#/a204943788p492276620/admin/streams/table/>
