@@ -132,6 +132,8 @@ Create secrets locally from files with individual lines of the secret and nothin
 No multi line files. See naming examples in the gcloud request. Also, verify correct secrets in the .env.local file.
 Note that Firebase secrets can be seen here <https://console.firebase.google.com/u/0/project/river-level-0/settings/general/web:MjgyNjQyMmQtODhmMi00MjAzLTg1YWQtODY1NzNiNGVhMmUz> Firebase > river-level-0 project (choose project) >  Project Overview - Gear Icon > Project Settings > note secrets should be the same as the .env.local file
 
+TODO - simplify since these are not secrets, then can just be passed as environment variables
+
 Initial Secrets Setup
 
 ```bash
@@ -319,6 +321,12 @@ Google Cloud Run > Home > Manage Custom Domains > New Domain > choose Cloud run 
 ### Squarespace Domains
 
 Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Manage Custom Domains) > Domains > Custom Records > Add Google records (Host = Name, Alias Data = Data, Type = Type)
+
+## Beta Attempts
+
+### Identity Aware Proxy (IAP)
+
+<https://console.cloud.google.com/security/iap?hl=en&inv=1&invt=AbzwBg&project=river-level-0>
 
 ## TODO
 
