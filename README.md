@@ -127,7 +127,7 @@ Increment version tag found in link below (e.g. TAG_NAME=1 -> 2) in command belo
 
 ```bash
 # v2 - Increment last version tag
-gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=25
+gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=28
 
 # Deprecated - Submit build from your local machine - will throw an error expects a tag
 gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest
@@ -146,15 +146,19 @@ If passes initial test, go into the cloud console > artifact registry > rivers-l
 
 If passing tests, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
 
-To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-frontend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.5 > "Describe new features or bugfixes"
+To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-frontend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.6 > "Describe new features or bugfixes"
 
 Push created local tag to GitHub - Manually
-$  git push origin v0.1.5
+$  git push origin v0.1.6
 Note that the tag was pushed to GitHub
 
-Create Docker tag
+Add Docker tag
 Add GitHub tag to the latest v1 tag that was tested and validated
 <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=AbzmlA&project=river-level-0>
+
+Modify Revision tag
+If v1 and v0.1.6 -> v1-016 > edit the existing v1 tag by adding "-016"
+<https://console.cloud.google.com/run/detail/us-west1/rivers-lit/revisions?inv=1&invt=AbzyIQ&project=river-level-0>
 
 #### Checks and Clean-up
 
