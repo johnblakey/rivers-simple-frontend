@@ -8,26 +8,47 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="/styles/style.css" />
   </head>
+  <!-- Google tag (gtag.js) -->
+  <script
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=G-SVP4GD55H9"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "G-SVP4GD55H9");
+  </script>
   <body>
     <header>
       <nav class="main-nav">
-        <a href="/" class="nav-logo-link">
-          <img
-            src="/river-level-logo-tiny.png"
-            alt="River Level Logo"
-            class="nav-logo" />
-          Home
-        </a>
-        <a href="/about.html">About</a>
+        <div class="nav-links-main-group">
+          <a href="/" class="nav-logo-link">
+            <img
+              src="/river-level-logo-tiny.png"
+              alt="River Level Logo"
+              class="nav-logo" />
+            Home
+          </a>
+          <a href="/about.html">About</a>
+        </div>
+        <div id="auth-container"></div>
+        <!-- Placeholder for Sign In button -->
       </nav>
     </header>
     <main>
-      <h1>Rivers Project</h1>
+      <div class="main-title-container">
+        <h1>Rivers Project</h1>
+        <span class="beta-tag-main">Beta</span>
+      </div>
       <h2>Pacific Northwest</h2>
       <div
         id="sort-controls"
         style="
           margin-bottom: 16px;
+          margin-top: 16px; /* Added to give space from the title container */
           display: flex;
           align-items: center;
           gap: 8px;
@@ -52,17 +73,19 @@
         FIREBASE_STORAGE_BUCKET: "__FIREBASE_STORAGE_BUCKET__",
         FIREBASE_MESSAGING_SENDER_ID: "__FIREBASE_MESSAGING_SENDER_ID__",
         FIREBASE_APP_ID: "__FIREBASE_APP_ID__",
-        API_BASE_URL: "__API_BASE_URL__"
+        API_BASE_URL: "__API_BASE_URL__",
       };
     </script>
     <script type="module" src="/src/main.ts"></script>
     <script>
-      fetch('/footer.html')
-        .then(response => response.ok ? response.text() : Promise.reject('Footer not found'))
-        .then(data => {
-          document.getElementById('footer-placeholder').innerHTML = data;
+      fetch("/footer.html")
+        .then((response) =>
+          response.ok ? response.text() : Promise.reject("Footer not found"),
+        )
+        .then((data) => {
+          document.getElementById("footer-placeholder").innerHTML = data;
         })
-        .catch(error => console.error('Error loading footer:', error));
+        .catch((error) => console.error("Error loading footer:", error));
     </script>
   </body>
 </html>

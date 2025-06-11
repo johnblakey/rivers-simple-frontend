@@ -1,6 +1,7 @@
 // auth-ui.ts
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { createRef, ref, type Ref } from 'lit/directives/ref.js';
 import { authService, type AuthUser } from './auth-service';
 
 @customElement('auth-ui')
@@ -14,21 +15,24 @@ export class AuthUI extends LitElement {
   @state()
   private error: string | null = null;
 
+  @state()
+  private showUserInfoPopup = false;
+
+  private popupRef: Ref<HTMLDivElement> = createRef();
+
   static styles = css`
     :host {
-      display: block;
-      padding: 1rem;
-      background: #f8f9fa;
-      border-radius: 8px;
-      margin-bottom: 1rem;
+      display: flex; /* Ensures the component aligns well in a flex container like the nav bar */
+      align-items: center;
     }
 
-    .auth-container {
+    .auth-wrapper {
       display: flex;
       align-items: center;
       justify-content: flex-end; /* Align content to the right */
       gap: 1rem;
       flex-wrap: wrap;
+      position: relative; /* For pop-up positioning */
     }
 
     .user-info {
@@ -42,16 +46,17 @@ export class AuthUI extends LitElement {
       height: 32px;
       border-radius: 50%;
       object-fit: cover;
+      cursor: pointer;
     }
 
     .user-name {
       font-weight: 500;
-      color: #333;
+      color: #ffffff; /* Changed for visibility on dark nav background */
     }
 
     .user-email {
       font-size: 0.875rem;
-      color: #666;
+      color: #e0e0e0; /* Changed for visibility on dark nav background */
     }
 
     .auth-button {
@@ -96,6 +101,30 @@ export class AuthUI extends LitElement {
       font-style: italic;
     }
 
+    .user-popup {
+      position: absolute;
+      top: calc(100% + 8px); /* Position below the avatar */
+      right: 0;
+      background-color: #ffffff;
+      color: #333333;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 1rem;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .user-popup .user-name,
+    .user-popup .user-email {
+      color: #333; /* Dark text for light popup background */
+    }
+    .user-popup .user-email {
+      font-size: 0.8rem;
+    }
     @media (max-width: 768px) {
       .auth-container {
         flex-direction: column;
@@ -104,6 +133,32 @@ export class AuthUI extends LitElement {
     }
   `;
 
+  private handleClickOutside = (event: MouseEvent) => {
+    const path = event.composedPath();
+    const popupElement = this.popupRef.value;
+    const avatarElement = this.shadowRoot?.querySelector('.user-avatar');
+    // More specific selector for the clickable name span when no avatar is present
+    const nameTriggerElement = this.shadowRoot?.querySelector('span.user-name[style*="cursor:pointer"]');
+
+    // If the popup isn't shown, or the click is inside the popup, do nothing.
+    if (!this.showUserInfoPopup || !popupElement || path.includes(popupElement)) {
+      return;
+    }
+
+    // If the click is on the avatar or the name trigger, do nothing here.
+    // The click handler on those elements will toggle the popup.
+    if (avatarElement && path.includes(avatarElement)) {
+      return;
+    }
+    if (nameTriggerElement && path.includes(nameTriggerElement)) {
+      return;
+    }
+
+    // If we reach here, the popup is shown and the click was outside the popup
+    // AND outside the avatar/name trigger. So, close the popup.
+    this.showUserInfoPopup = false;
+  };
+
   connectedCallback() {
     super.connectedCallback();
 
@@ -111,7 +166,21 @@ export class AuthUI extends LitElement {
     authService.onAuthStateChanged((user) => {
       this.user = user;
       this.loading = false;
+      if (!user) { // If user signs out or was never logged in
+        this.showUserInfoPopup = false; // Ensure pop-up is closed
+      }
     });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    document.removeEventListener('mousedown', this.handleClickOutside);
+  }
+
+  protected updated(changedProperties: Map<string | number | symbol, unknown>) {
+    if (changedProperties.has('showUserInfoPopup')) {
+      this.toggleClickOutsideListener(this.showUserInfoPopup);
+    }
   }
 
   private async handleSignIn() {
@@ -129,51 +198,99 @@ export class AuthUI extends LitElement {
   private async handleSignOut() {
     this.loading = true;
     this.error = null;
+    this.showUserInfoPopup = false; // Close pop-up immediately on initiating sign-out
 
     try {
       await authService.signOut();
+      // onAuthStateChanged will set user to null and loading to false.
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'Sign out failed';
+      // Ensure loading is false on error, as onAuthStateChanged might not fire
+      // or might fire before this catch block in some scenarios.
       this.loading = false;
     }
   }
 
+  private toggleUserInfoPopup() {
+    this.showUserInfoPopup = !this.showUserInfoPopup;
+  }
+
+  private toggleClickOutsideListener(enable: boolean) {
+    if (enable) {
+      document.addEventListener('mousedown', this.handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', this.handleClickOutside);
+    }
+  }
+
   render() {
-    if (this.loading) {
+    // Show loading only if not already displaying user info (i.e., user is null)
+    if (this.loading && !this.user) {
       return html`
-        <div class="auth-container">
+        <div class="auth-wrapper">
           <span class="loading">Loading...</span>
         </div>
       `;
     }
 
     if (this.user) {
+      const tooltipText = `${this.user.displayName || 'User'}\n${this.user.email || '(No email provided)'}`;
       return html`
-        <div class="auth-container">
-          <div class="user-info">
-            ${this.user.photoURL ? html`
-              <img class="user-avatar" src="${this.user.photoURL}" alt="User avatar" />
-            ` : ''}
-            <div>
-              <div class="user-name">${this.user.displayName || 'User'}</div>
-              <div class="user-email">${this.user.email}</div>
+        <div class="auth-wrapper">
+          ${this.user.photoURL ? html`
+            <img
+              class="user-avatar"
+              src="${this.user.photoURL}"
+              alt="User avatar"
+              title="${tooltipText}"
+              @click=${this.toggleUserInfoPopup}
+              @keydown=${(e: KeyboardEvent) => e.key === 'Enter' || e.key === ' ' ? this.toggleUserInfoPopup() : null}
+              tabindex="0"
+              role="button"
+              aria-haspopup="true"
+              aria-expanded="${this.showUserInfoPopup}"
+              aria-label="User menu"
+            />
+          ` : html`
+            <span
+              @click=${this.toggleUserInfoPopup}
+              @keydown=${(e: KeyboardEvent) => e.key === 'Enter' || e.key === ' ' ? this.toggleUserInfoPopup() : null}
+              class="user-name"
+              style="cursor:pointer;"
+              title="${tooltipText}"
+              tabindex="0"
+              role="button"
+              aria-haspopup="true"
+              aria-expanded="${this.showUserInfoPopup}"
+              aria-label="User menu"
+            >${this.user.displayName || 'User'}</span>
+          `}
+
+          ${this.showUserInfoPopup ? html`
+            <div class="user-popup" ${ref(this.popupRef)} role="menu">
+              <div class="user-info">
+                <div>
+                  <div class="user-name">${this.user.displayName || 'User'}</div>
+                  <div class="user-email">${this.user.email}</div>
+                </div>
+              </div>
+              <button
+                class="auth-button sign-out-button"
+                @click=${this.handleSignOut}
+                ?disabled=${this.loading} /* Disable while any auth operation is in progress */
+                role="menuitem"
+              >
+                Sign Out
+              </button>
             </div>
-          </div>
-          <button
-            class="auth-button sign-out-button"
-            @click=${this.handleSignOut}
-            ?disabled=${this.loading}
-          >
-            Sign Out
-          </button>
+          ` : ''}
         </div>
         ${this.error ? html`<div class="error-message">${this.error}</div>` : ''}
       `;
     }
 
     return html`
-      <div class="auth-container">
-        <div>Sign in to save your favorite rivers</div>
+      <div class="auth-wrapper">
         <button
           class="auth-button"
           @click=${this.handleSignIn}

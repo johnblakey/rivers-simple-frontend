@@ -8,11 +8,13 @@ import { authService } from './utility/auth-service';
 
 console.info("Welcome to the rivers.johnblakey.org. Email me at johnblakeyorg@gmail.com if you find any bugs, security issues, or have feedback. Blunt tone welcome.");
 
-let currentSortOrder: 'alphabetical' | 'runnable' | 'favorites' = 'alphabetical';
+let currentSortOrder: 'runnable' | 'alphabetical' = 'runnable'; // Default to Runnable
 let allRiverDetails: RiverDetail[] = [];
 let chartsContainer: HTMLDivElement | null = null;
-let sortButton: HTMLButtonElement | null = null;
-let authContainer: HTMLDivElement | null = null;
+// The sortButton element will be repurposed to host the toggle options
+let sortToggleContainer: HTMLElement | null = null;
+let runnableSortOption: HTMLElement | null = null;
+let alphabeticalSortOption: HTMLElement | null = null;
 
 async function initializeApp() {
   const appHost = document.getElementById('charts-host');
@@ -22,23 +24,24 @@ async function initializeApp() {
     return;
   }
 
-  appHost.innerHTML = '';
+  // Setup Auth UI in the header
+  const headerAuthContainer = document.getElementById('auth-container');
+  if (headerAuthContainer) {
+    const authUI = document.createElement('auth-ui');
+    headerAuthContainer.innerHTML = ''; // Clear any placeholder
+    headerAuthContainer.appendChild(authUI);
+  } else {
+    console.warn('#auth-container element not found in the header.');
+  }
 
-  // Create auth container and add auth UI
-  authContainer = document.createElement('div');
-  authContainer.id = 'auth-container';
-  const authUI = document.createElement('auth-ui');
-  authContainer.appendChild(authUI);
-  appHost.appendChild(authContainer);
-
-  // Setup sort button
-  sortButton = document.getElementById('sort-toggle') as HTMLButtonElement;
-  if (sortButton) {
-    updateSortButtonText();
-    sortButton.addEventListener('click', toggleSort);
+  // Setup sort toggle
+  sortToggleContainer = document.getElementById('sort-toggle');
+  if (sortToggleContainer) {
+    setupSortToggle();
   }
 
   // Create charts container
+  appHost.innerHTML = ''; // Clear appHost after auth UI is potentially set up elsewhere
   chartsContainer = document.createElement('div');
   appHost.appendChild(chartsContainer);
 
@@ -60,59 +63,72 @@ async function initializeApp() {
   }
 
   // Listen for auth state changes to update sorting options
-  authService.onAuthStateChanged((user) => {
-    updateSortButtonText();
-    if (currentSortOrder === 'favorites' && !user) {
-      // If user signs out while on favorites sort, switch to alphabetical
-      currentSortOrder = 'alphabetical';
-      updateSortButtonText();
-      applySorting();
-    }
-
-    // Re-apply sorting when the user signs in, in case favorites changed
-    if (user) {
-      applySorting();
-    }
+  authService.onAuthStateChanged((_user) => {
+    updateSortToggleVisuals(); // Update visual state of the toggle
+    // Re-apply sorting when auth state changes, to update favorites pinning
+    applySorting();
   });
 }
 
-function toggleSort() {
-  const isSignedIn = authService.isSignedIn();
+function setupSortToggle() {
+  if (!sortToggleContainer) return;
 
-  if (currentSortOrder === 'alphabetical') {
-    currentSortOrder = 'runnable';
-  } else if (currentSortOrder === 'runnable') {
-    currentSortOrder = isSignedIn ? 'favorites' : 'alphabetical';
-  } else if (currentSortOrder === 'favorites') {
-    currentSortOrder = 'alphabetical';
+  sortToggleContainer.innerHTML = ''; // Clear existing content
+  // Basic styling for the container (you might want to use CSS classes)
+  sortToggleContainer.style.display = 'inline-flex';
+  sortToggleContainer.style.border = '1px solid #ccc';
+  sortToggleContainer.style.borderRadius = '4px';
+  sortToggleContainer.style.overflow = 'hidden';
+  if (sortToggleContainer instanceof HTMLButtonElement) {
+    sortToggleContainer.style.padding = '0'; // Remove button padding if it's a button
   }
 
-  updateSortButtonText();
+  runnableSortOption = document.createElement('span');
+  runnableSortOption.textContent = 'Runnable';
+  runnableSortOption.dataset.sortValue = 'runnable';
 
-  // Clear the URL hash when toggling sort modes
-  history.replaceState(null, "", window.location.pathname);
+  alphabeticalSortOption = document.createElement('span');
+  alphabeticalSortOption.textContent = 'Alphabetical';
+  alphabeticalSortOption.dataset.sortValue = 'alphabetical';
 
-  applySorting();
+  [runnableSortOption, alphabeticalSortOption].forEach(option => {
+    option.style.padding = '8px 12px';
+    option.style.cursor = 'pointer';
+    option.style.userSelect = 'none';
+    option.addEventListener('click', () => {
+      const newSortOrder = option.dataset.sortValue as 'runnable' | 'alphabetical';
+      if (currentSortOrder !== newSortOrder) {
+        currentSortOrder = newSortOrder;
+        updateSortToggleVisuals();
+        history.replaceState(null, "", window.location.pathname); // Clear hash
+        applySorting();
+      }
+    });
+    sortToggleContainer!.appendChild(option);
+  });
+
+  updateSortToggleVisuals();
 }
 
-function updateSortButtonText() {
-  if (sortButton) {
-    let buttonText = '';
-    switch (currentSortOrder) {
-      case 'alphabetical':
-        buttonText = 'Sort by: Alphabetical';
-        break;
-      case 'runnable':
-        buttonText = 'Sort by: Runnable';
-        break;
-      case 'favorites':
-        buttonText = 'Sort by: Favorites';
-        break;
-    }
+function updateSortToggleVisuals() {
+  if (!runnableSortOption || !alphabeticalSortOption) return;
 
-    sortButton.textContent = buttonText;
-    sortButton.setAttribute('data-sort', currentSortOrder);
-  }
+  const activeStyle = { backgroundColor: '#007bff', color: 'white' };
+  const inactiveStyle = { backgroundColor: '#f0f0f0', color: 'black' };
+
+  Object.assign(runnableSortOption.style, currentSortOrder === 'runnable' ? activeStyle : inactiveStyle);
+  Object.assign(alphabeticalSortOption.style, currentSortOrder === 'alphabetical' ? activeStyle : inactiveStyle);
+
+  // Add hover effect for inactive buttons (optional, better with CSS classes)
+  [runnableSortOption, alphabeticalSortOption].forEach(option => {
+    if (option.style.backgroundColor === inactiveStyle.backgroundColor) {
+      option.onmouseover = () => option.style.backgroundColor = '#e0e0e0';
+      option.onmouseout = () => option.style.backgroundColor = inactiveStyle.backgroundColor;
+    } else {
+      option.onmouseover = null;
+      option.onmouseout = null;
+    }
+  });
 }
 
 function renderCharts() {
@@ -181,7 +197,7 @@ async function applySorting() {
     if (!aIsFav && bIsFav) return 1;
 
     // If both are favorites or both are non-favorites, apply current sort order
-    if (currentSortOrder === 'alphabetical' || currentSortOrder === 'favorites') {
+    if (currentSortOrder === 'alphabetical') {
       return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
     } else if (currentSortOrder === 'runnable') {
       const statusDiff = aChart.sortKeyRunnable - bChart.sortKeyRunnable;

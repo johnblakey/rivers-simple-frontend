@@ -2,6 +2,18 @@
 
 Simple HTML, CSS, TypeScript for rivers website <https://rivers.johnblakey.org/>
 
+## Project Goals
+
+Create a frontend that powers a dashboard that is flexible and simple enough to keep adding whitewater features.
+
+## Google Analytics 4 (GA4)
+
+Simple Engagement Report for rivers.johnblakey.org
+<https://analytics.google.com/analytics/web/#/p492276620/reports/reportinghub?params=_u..nav%3Dmaui>
+
+GA4 Stream added
+<https://analytics.google.com/analytics/web/#/a204943788p492276620/admin/streams/table/>
+
 ## Setup TypeScript Project
 
 Summary: plan to use the MDN recommended toolchain and coding style for beginners
@@ -106,7 +118,55 @@ Add authorized domains for testing with Firebase authorization
 
 ## Dockerize Frontend and Deploy to Google Cloud Run
 
-### Build process
+See setup and previous manual deployment and tagging steps at the bottom of this section. Now replaced by cloudbuild.yaml.
+
+### Build Push Deploy to Cloud Run
+
+Increment version tag found in link below (e.g. TAG_NAME=1 -> 2) in command below
+<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=Abz1yw&project=river-level-0>
+
+```bash
+# v2 - Increment last version tag
+gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=25
+
+# Deprecated - Submit build from your local machine - will throw an error expects a tag
+gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest
+```
+
+See builds and logging at <https://console.cloud.google.com/cloud-build/builds?referrer=search&inv=1&invt=AbzdQA&walkthrough_id=iam--create-service-account&project=river-level-0>
+
+### Tagging
+
+#### Deprecated - Initial v1 Tag
+
+<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=AbznXQ&project=river-level-0>
+If passes initial test, go into the cloud console > artifact registry > rivers-lit > add tag to "Latest" tag > v18
+
+#### GitHub v0.1.0 Tag - Manual
+
+If passing tests, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
+
+To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-frontend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.5 > "Describe new features or bugfixes"
+
+Push created local tag to GitHub - Manually
+$  git push origin v0.1.5
+Note that the tag was pushed to GitHub
+
+Create Docker tag
+Add GitHub tag to the latest v1 tag that was tested and validated
+<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=AbzmlA&project=river-level-0>
+
+#### Checks and Clean-up
+
+Check backend rivers-lit that it is in prod and not open dangerously in dev
+<https://console.cloud.google.com/run/detail/us-west1/rivers-lit/revisions?inv=1&invt=AbzeuQ&project=river-level-0>
+
+Cleanup - delete unnecessary images and Cloud run revisions
+<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1?inv=1&invt=AbzmlA&project=river-level-0>
+
+Congrats, you now modified the rivers frontend, tested it, and deployed it with good tags for tracking in GitHub and Google Cloud.
+
+### Docker Build process
 
 Docker image should be lean and delete items not needed after setup (TODO - verify this)
 I use "server" to make assets available to website in production build
@@ -118,6 +178,8 @@ Created artifact repo <https://console.cloud.google.com/artifacts/docker/river-l
 Start the Docker Desktop Apple app and login (see phone)
 
 #### Setup Secrets
+
+TODO - simplify since these are not secrets, then can just be passed as environment variables in cloudbuild
 
 Create secrets locally from files with individual lines of the secret and nothing else.
 No multi line files. See naming examples in the gcloud request. Also, verify correct secrets in the .env.local file.
@@ -190,41 +252,12 @@ gcloud projects get-iam-policy river-level-0 \
 
 For service accounts go to Google Cloud console > river-levels-0 - project > IAM > Service Accounts > follow prompts to create a service account name > note the roles of the IAM account to copy > go to Permissions > Roles > type in name of role from docs or error messsage on role to add to then test if issue resolves. For example I had to use trial and error on cloudbuild.yaml deploy to see needed permissions. Annoying when a deployment takes a couple minutes between role tests.
 
-### Build Push Deploy to Cloud Run
+#### Deprecated tagging steps
 
-```bash
-# Submit build from your local machine
-gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest
-```
-
-See builds and logging at <https://console.cloud.google.com/cloud-build/builds?referrer=search&inv=1&invt=AbzdQA&walkthrough_id=iam--create-service-account&project=river-level-0>
-
-### Tagging
-
-If passing tests, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
-
-To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-frontend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.5 > "Describe new features or bugfixes"
-
-Push created local tag to GitHub - Manually
-$  git push origin v0.1.5
-Note that the tag was pushed to GitHub
-
-Create Docker tag
 TODO - find the exact docker image used in Cloud Run instance
 $ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.5
 Push Docker tag
 $ docker push us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.5
-
-Verify the rivers-lit tag results here
-<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=AbzmlA&project=river-level-0>
-
-Check backend rivers-flask that it is in prod and not open dangerously in dev
-<https://console.cloud.google.com/run/detail/us-west1/rivers-lit/revisions?inv=1&invt=AbzeuQ&project=river-level-0>
-
-Cleanup - delete unnecessary images and Cloud run revisions
-<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1?inv=1&invt=AbzmlA&project=river-level-0>
-
-Congrats, you now modified the rivers frontend, tested it, and deployed it with good tags for tracking in GitHub and Google Cloud.
 
 #### Deprecated - Dockerize the Flask app (TODO - Archive)
 
@@ -304,7 +337,23 @@ Google Cloud Run > Home > Manage Custom Domains > New Domain > choose Cloud run 
 
 Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Manage Custom Domains) > Domains > Custom Records > Add Google records (Host = Name, Alias Data = Data, Type = Type)
 
+## Beta Attempts
+
+### Identity Aware Proxy (IAP)
+
+<https://console.cloud.google.com/security/iap?hl=en&inv=1&invt=AbzwBg&project=river-level-0>
+
 ## TODO
+
+### ~~Authentication TODO~~
+
+- ~~Add user login capability (use Google Cloud authentication | Firebase | Datastore)~~
+- ~~Favorite charts pinned to top~~
+- ~~Fix avatar not uploading~~
+- ~~Verify saving chart positions~~
+- ~~Change look of my button to the Google Login button~~
+
+### Short-term TODO
 
 - ~~Bug fix: fix Lit graph x-axis formatting issue - only shows time~~
 - ~~Change structure of html and typescirpt to allow links to particular dashboards (url#river_name)~~
@@ -315,22 +364,13 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Add CSS to about.html~~
 - ~~Make timezone change in chart.js based on client timezone~~
 - ~~Change ft3/s to cubic feet per second CFS~~
-- Use Apple style toggle for sorting vs button
-- Fix chart label overlap on mobile
-
-### Authentication TODO
-
-- ~~Add user login capability (use Google Cloud authentication | Firebase | Datastore)~~
-- ~~Favorite charts pinned to top~~
-- ~~Fix avatar not uploading~~
-- ~~Verify saving chart positions~~
-- Change look of my button to the Google Login button
+- ~~Use Apple style toggle for sorting vs button~~
+- ~~Fix chart label overlap on mobile~~
 - Allow manually setting timezone (default is use the client to set it)
 - Allow rearranging (arrows? drag them?) favorite charts pinned to top and save the new arrangement
 - Reduce roles on Service accounts by replacing with user created simplified service account <https://console.cloud.google.com/iam-admin/iam?inv=1&invt=AbzeuQ&project=river-level-0> and <https://console.cloud.google.com/iam-admin/serviceaccounts?inv=1&invt=AbzeuQ&project=river-level-0> theres an auto-generated account
 - Can I lock down APIs more?
 - I need to verify how to run local and test vs deploy to Cloud Run and test
-- Fix rivers.johnblakey.org, firebase auth error, check Cloud Run deployment, is the cloudbuild item deployed?
 
 ### Long-term TODO
 
@@ -345,7 +385,7 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - Refactor utility files naming and scope
 - Use security recommendations here <https://owasp.org/www-project-top-ten/> to this project and add to mega-reference
 
-### Production
+### Production Checks
 
 - Verify I put Lit in production mode by using | $ npm run prod:build | in the Dockerfile (is there a waring in the browser console about it?)
 - Verify that Cloud Run backend deployment is set to production env after frontend deployment (no warning - verify manually <https://console.cloud.google.com/run/detail/us-west1/rivers-flask/revisions?project=river-level-0&inv=1&invt=AbzmZg>)

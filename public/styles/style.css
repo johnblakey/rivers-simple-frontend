@@ -17,15 +17,28 @@ main {
   border-radius: 8px;
 }
 
+/* Container for H1 and Beta tag */
+.main-title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px; /* Adjust as needed, was on h1 */
+}
+
+.main-title-container h1 {
+  margin-bottom: 0; /* Handled by container now */
+  text-align: left; /* Override general h1 style if it was centered */
+}
+
 h1, h2 {
   color: #2c3e50; /* A darker, slightly desaturated blue */
   margin-top: 0;
 }
 
 h1 {
-  text-align: center;
+  /* text-align: center; /* Centering handled by main or specific containers if needed */
   margin-bottom: 18px;  /* Less space below the title */
-  font-size: 2.2em;     /* Slightly smaller */
+  font-size: 2.2em;
 }
 
 h2 {
@@ -44,12 +57,19 @@ h2 {
 /* Navigation Bar */
 .main-nav {
   background-color: #34495e; /* Dark blue-gray background */
-  padding: 0; /* No padding for the bar itself; content centers with flex */
+  padding: 0 15px; /* Add horizontal padding to the nav bar */
   display: flex;
-  justify-content: center; /* Center nav items */
+  justify-content: space-between; /* Align items: group to left, beta tag to right */
   align-items: center;
-  gap: 20px; /* Space between Home link group and About link */
+  /* gap: 20px; /* Removed global gap, apply to nav-links-main-group */
   margin: 0; /* Full width at the top of the page */
+}
+
+/* New group for Home and About links */
+.nav-links-main-group {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* Space between Home link and About link */
 }
 
 .main-nav a {
@@ -82,6 +102,18 @@ h2 {
 .nav-logo {
   height: 24px; /* Set a specific height for the logo */
   width: auto; /* Maintain aspect ratio */
+}
+
+/* Beta tag next to main H1 title */
+.beta-tag-main {
+  padding: 4px 8px;
+  background-color: #ffc107; /* Amber/yellow for beta */
+  color: #333; /* Dark text for contrast */
+  font-size: 0.75em;
+  font-weight: bold;
+  border-radius: 4px;
+  text-transform: uppercase;
+  white-space: nowrap; /* Prevents wrapping if space is tight */
 }
 
 /* Basic responsive adjustments */
@@ -182,4 +214,42 @@ footer {
     margin-bottom: 6px;
     margin-right: 0;
   }
+}
+
+/* Styles for the sort toggle (left-right toggle) */
+#sort-toggle {
+  display: inline-flex;
+  border: 1px solid #ccc; /* Matches example from previous response */
+  border-radius: 4px;
+  overflow: hidden; /* Ensures child border-radius or backgrounds are clipped nicely */
+  padding: 0; /* Remove button padding if it was a button */
+  /* Mimic some aspects of .auth-button for consistency if desired */
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+#sort-toggle span {
+  padding: 8px 12px; /* Matches example from previous response */
+  cursor: pointer;
+  user-select: none; /* Prevents text selection on click */
+  transition: background-color 0.2s, color 0.2s;
+  background-color: #f0f0f0; /* Default inactive background */
+  color: #333; /* Default inactive text color */
+  line-height: 1.5; /* Ensure consistent height with buttons */
+}
+
+/* Optional: separator line between toggle options */
+#sort-toggle span:first-child {
+  border-right: 1px solid #ccc;
+}
+
+/* Style for the active sort option */
+#sort-toggle span.active-sort-option {
+  background-color: #007bff; /* Active background (e.g., primary blue) */
+  color: white; /* Active text color */
+}
+
+/* Hover effect for inactive options */
+#sort-toggle span:not(.active-sort-option):hover {
+  background-color: #e0e0e0;
 }
