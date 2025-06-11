@@ -26,12 +26,28 @@ steps:
       - '_API_BASE_URL'
 
   # Push to registry
+  # Tag the built image additionally with v$TAG_NAME (e.g., v13)
   - name: 'gcr.io/cloud-builders/docker'
+    id: 'Tag with version'
+    args:
+      - 'tag'
+      - 'us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:$SHORT_SHA'
+      - 'us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v$TAG_NAME'
+
+  # Push the $SHORT_SHA (e.g., latest) tag
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push SHORT_SHA tag'
     args: ['push', 'us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:$SHORT_SHA']
 
-  # Deploy to Cloud Run (no secrets needed here since they're baked in)
+  # Push the v$TAG_NAME (e.g., v13) tag
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push version tag'
+    args: ['push', 'us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v$TAG_NAME']
+
+  # Deploy to Cloud Run
   # Secrets are passed during build time and baked into the frontend assets.
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'Deploy to Cloud Run'
     args:
       - 'run'
       - 'deploy'
@@ -44,7 +60,28 @@ steps:
       - '--min-instances=0'
       - '--max-instances=10'
       - '--concurrency=80'
-      - '--timeout=300'
+      - '--timeout=300s'
+
+  # Route 100% of traffic to this revision and assign tag v$TAG_NAME
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'Tag and route traffic'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+        REVISION=$$(gcloud run revisions list --service=rivers-lit --region=us-west1 --sort-by="~createTime" --limit=1 --format="value(metadata.name)")
+        echo "Latest revision: $$REVISION"
+
+        # First, route 100% of traffic to the latest revision
+        gcloud run services update-traffic rivers-lit \
+          --region=us-west1 \
+          --to-revisions="$$REVISION=100"
+
+        # Then, assign the tag to the revision
+        gcloud run services update-traffic rivers-lit \
+          --region=us-west1 \
+          --set-tags="v$TAG_NAME=$$REVISION"
 
 availableSecrets:
   secretManager:
@@ -65,3 +102,4 @@ availableSecrets:
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  
