@@ -6,6 +6,7 @@ import "chartjs-adapter-date-fns";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { getRiverLevelsBySiteCode, type RiverLevel, type RiverDetail } from "../utility/data";
 import { slugify } from "../utility/string-utils";
+import "./river-notes.ts"; // Import the new component
 
 Chart.register(...registerables, AnnotationPlugin);
 import { CHART_COLORS } from "../utility/chart-colors";
@@ -26,6 +27,7 @@ function getCurrentLevelColor(value: number, low: number | undefined, high: numb
 export class RiverLevelChart extends LitElement {
   @property({ type: String }) siteCode = "";
   @property({ type: Object }) riverDetail: RiverDetail | null = null;
+  @property({ type: String }) idToken: string | null = null; // For passing auth token to notes component
 
   @state() private levels: RiverLevel[] = [];
   @state() private isLoading = false;
@@ -395,6 +397,10 @@ export class RiverLevelChart extends LitElement {
             ` : ""
             }
           </div>
+        ` : ""}
+
+        ${this.siteCode ? html`
+          <river-notes .siteCode=${this.siteCode} .idToken=${this.idToken}></river-notes>
         ` : ""}
       </div>
     `;
