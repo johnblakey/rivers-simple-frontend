@@ -1,6 +1,6 @@
-import { getRiverDetails } from './utility/data';
-import type { RiverDetail } from './utility/data';
-import { RiverLevelChart } from './components/river-level-chart';
+import { getRiverDetails } from './utility/data-service.ts';
+import type { RiverDetail } from './utility/data-service.ts';
+import { RiverLevelChart } from './components/river-chart.ts';
 import { slugify } from './utility/string-utils';
 import { FavoriteButton } from './components/favorite-button.ts'; // Import FavoriteButton
 import './utility/auth-ui'; // Import the auth UI component

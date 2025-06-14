@@ -4,7 +4,7 @@ import { Chart, registerables, type ChartConfiguration } from "chart.js/auto";
 import AnnotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotation";
 import "chartjs-adapter-date-fns";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { getRiverLevelsBySiteCode, type RiverLevel, type RiverDetail } from "../utility/data";
+import { getRiverLevelsBySiteCode, type RiverLevel, type RiverDetail } from "../utility/data-service";
 import { slugify } from "../utility/string-utils";
 import { CHART_COLORS } from "../utility/chart-colors";
 
