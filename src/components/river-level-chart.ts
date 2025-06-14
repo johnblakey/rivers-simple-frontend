@@ -1,26 +1,29 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Chart, registerables, type ChartConfiguration, type ChartData } from "chart.js/auto";
+import { Chart, registerables, type ChartConfiguration } from "chart.js/auto";
 import AnnotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotation";
 import "chartjs-adapter-date-fns";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { getRiverLevelsBySiteCode, type RiverLevel, type RiverDetail } from "../utility/data";
 import { slugify } from "../utility/string-utils";
-
-Chart.register(...registerables, AnnotationPlugin);
 import { CHART_COLORS } from "../utility/chart-colors";
 
-function linkify(text: string): string {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-}
+Chart.register(...registerables, AnnotationPlugin);
 
-function getCurrentLevelColor(value: number, low: number | undefined, high: number | undefined): string {
-  if (typeof low === "number" && value < low) return CHART_COLORS.text.subtitleLow;
-  if (typeof low === "number" && typeof high === "number" && value >= low && value <= high) return CHART_COLORS.text.subtitleOptimal;
-  if (typeof high === "number" && value > high) return CHART_COLORS.text.subtitleHigh;
+// Helper functions
+const linkify = (text: string) => text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+
+const getCurrentLevelColor = (value: number, low?: number, high?: number): string => {
+  if (low !== undefined && value < low) return CHART_COLORS.text.subtitleLow;
+  if (low !== undefined && high !== undefined && value >= low && value <= high) return CHART_COLORS.text.subtitleOptimal;
+  if (high !== undefined && value > high) return CHART_COLORS.text.subtitleHigh;
   return CHART_COLORS.text.subtitleDefault;
-}
+};
+
+const getDisplayUnit = (unitCode?: string, short = false) => {
+  if (unitCode === 'ft3/s') return short ? 'CFS' : 'Cubic Feet Per Second (CFS)';
+  return unitCode ?? 'N/A';
+};
 
 @customElement("river-level-chart")
 export class RiverLevelChart extends LitElement {
@@ -30,7 +33,6 @@ export class RiverLevelChart extends LitElement {
   @state() private levels: RiverLevel[] = [];
   @state() private isLoading = false;
   @state() private error: string | null = null;
-  @state() private latestValue: number | null = null;
 
   private chart: Chart | null = null;
   private static cache: Record<string, RiverLevel[]> = {};
@@ -44,108 +46,54 @@ export class RiverLevelChart extends LitElement {
       border-radius: 8px;
       max-width: 800px;
       transition: background-color 0.3s ease;
-    }
-    :host(:hover) {
-      background-color: #f5f5f5;
-    }
-    h2 {
-      margin-top: 0;
       cursor: pointer;
     }
+    :host(:hover) { background-color: #f5f5f5; }
+
+    h2 { margin-top: 0; }
+
     .details {
       margin-bottom: 16px;
       padding-bottom: 16px;
       border-bottom: 1px solid #eee;
     }
-    .details p {
-      margin: 8px 0; /* Increased vertical margin */
-      font-size: 0.95em; /* Slightly larger for readability */
-      color: #455a64; /* Softer, modern dark gray/blue */
-      line-height: 1.5;
-    }
-    .details strong {
-      color: #263238; /* Darker for emphasis */
-      font-weight: 600;
-    }
-    .details a {
-      color: #007bff; /* Modern blue for links */
-      text-decoration: none;
-      font-weight: 500;
-      padding-bottom: 1px; /* Space for the border */
-      border-bottom: 1px solid transparent; /* Prepare for hover effect */
-      transition: color 0.2s ease, border-color 0.2s ease;
-    }
-    .details a:hover, .details a:focus {
-      color: #0056b3; /* Darker blue on hover */
-      border-bottom-color: #0056b3; /* Show underline effect with border */
+
+    .details, .details-below {
+      p {
+        margin: 8px 0;
+        font-size: 0.95em;
+        color: #455a64;
+        line-height: 1.5;
+      }
+      strong { color: #263238; font-weight: 600; }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+        border-bottom: 1px solid transparent;
+        transition: all 0.2s ease;
+      }
+      a:hover, a:focus {
+        color: #0056b3;
+        border-bottom-color: #0056b3;
+      }
     }
 
-    .details-below { /* Style for the section below the chart */
-      margin-top: 16px; /* Add some space above this section */
-    }
-    .details-below p {
-      margin: 8px 0;
-      font-size: 0.95em;
-      color: #455a64;
-      line-height: 1.5;
-    }
-    canvas {
-      max-width: 100%;
-      height: auto;
-    }
-    .loading, .error, .no-data {
-      padding: 20px;
-      text-align: center;
-    }
-    .no-data {
-      color: #757575;
-      font-style: italic;
-    }
-
-    .details-below strong {
-      color: #263238;
-      font-weight: 600;
-    }
-    .details-below a {
-      color: #007bff;
-      text-decoration: none;
-      font-weight: 500;
-      padding-bottom: 1px;
-      border-bottom: 1px solid transparent;
-      transition: color 0.2s ease, border-color 0.2s ease;
-    }
-    .details-below a:hover, .details-below a:focus {
-      color: #0056b3;
-      border-bottom-color: #0056b3;
-    }
+    .details-below { margin-top: 16px; }
+    canvas { max-width: 100%; height: auto; }
+    .loading, .error { padding: 20px; text-align: center; }
+    .error { color: #d32f2f; }
 
     @media (max-width: 768px) {
-      :host {
-        padding: 16px 8px; /* Reduced left/right padding for mobile */
-      }
+      :host { padding: 16px 8px; }
     }
   `;
 
-  protected async willUpdate(changed: Map<string | number | symbol, unknown>) {
-    if ((changed.has("siteCode") || changed.has("riverDetail")) && this.siteCode && this.riverDetail) {
-      await this.fetchData();
-    }
-  }
+  get displayName() { return this.riverDetail?.siteName || this.siteCode || "Loading..."; }
+  get latestValue() { return this.levels.length > 0 ? this.levels[this.levels.length - 1].value : null; }
+  get hasValidRange() { return this.riverDetail && (this.riverDetail.lowAdvisedCFS || this.riverDetail.highAdvisedCFS); }
 
-  protected updated() {
-    this.renderChart();
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.destroyChart();
-  }
-
-  public get displayName(): string {
-    return this.riverDetail?.siteName || this.siteCode || "Loading...";
-  }
-
-  public get sortKeyRunnable(): number {
+  get sortKeyRunnable(): number {
     if (this.isLoading) return 4;
     if (!this.levels.length || this.latestValue === null) return 5;
     if (!this.riverDetail) return 3;
@@ -153,26 +101,23 @@ export class RiverLevelChart extends LitElement {
     const { lowAdvisedCFS: low, highAdvisedCFS: high } = this.riverDetail;
     const value = this.latestValue;
 
-    // Check if we have valid range criteria
-    const lowIsNum = typeof low === 'number';
-    const highIsNum = typeof high === 'number';
-
-    if (lowIsNum && highIsNum && low < high) {
-      // Standard range: low < high
-      return (value >= low && value <= high) ? 0 : 1;
-    } else if (lowIsNum && !highIsNum) {
-      // Only low threshold
-      return value >= low ? 0 : 1;
-    } else if (!lowIsNum && highIsNum) {
-      // Only high threshold
-      return value <= high ? 0 : 1;
-    } else if (lowIsNum && highIsNum && low === high) {
-      // Exact point
-      return value === low ? 0 : 1;
+    if (low !== undefined && high !== undefined) {
+      if (low < high) return (value >= low && value <= high) ? 0 : 1;
+      if (low === high) return value === low ? 0 : 1;
     }
-
-    return 2; // Invalid or unclear criteria
+    if (low !== undefined && !high) return value >= low ? 0 : 1;
+    if (high !== undefined && !low) return value <= high ? 0 : 1;
+    return 2;
   }
+
+  protected async willUpdate(changed: Map<string | number | symbol, unknown>) {
+    if ((changed.has("siteCode") || changed.has("riverDetail")) && this.siteCode && this.riverDetail) {
+      await this.fetchData();
+    }
+  }
+
+  protected updated() { this.renderChart(); }
+  disconnectedCallback() { super.disconnectedCallback(); this.destroyChart(); }
 
   private async fetchData(): Promise<void> {
     if (!this.siteCode) return;
@@ -181,7 +126,6 @@ export class RiverLevelChart extends LitElement {
     this.error = null;
 
     try {
-      // Use cache if available
       if (RiverLevelChart.cache[this.siteCode]) {
         this.levels = RiverLevelChart.cache[this.siteCode];
       } else {
@@ -189,28 +133,11 @@ export class RiverLevelChart extends LitElement {
         this.levels = levels.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
         RiverLevelChart.cache[this.siteCode] = this.levels;
       }
-
-      this.latestValue = this.levels.length > 0 ? this.levels[this.levels.length - 1].value : null;
     } catch (err) {
       this.error = err instanceof Error ? err.message : "Failed to load data";
-      this.latestValue = null;
     } finally {
       this.isLoading = false;
     }
-  }
-
-  private getDisplayUnit(unitCode: string | undefined): string {
-    if (unitCode === 'ft3/s') {
-      return 'Cubic Feet Per Second (CFS)';
-    }
-    return unitCode || "N/A";
-  }
-
-  private getShortDisplayUnit(unitCode: string | undefined): string {
-    if (unitCode === 'ft3/s') {
-      return 'CFS';
-    }
-    return unitCode || "N/A";
   }
 
   private renderChart(): void {
@@ -222,66 +149,46 @@ export class RiverLevelChart extends LitElement {
     const canvas = this.shadowRoot?.querySelector("canvas") as HTMLCanvasElement;
     if (!canvas) return;
 
-    // Always destroy existing chart before creating new one
     this.destroyChart();
-
-    // Small delay to ensure canvas is ready after DOM operations
     requestAnimationFrame(() => {
-      const chartData: ChartData = {
+      this.chart = new Chart(canvas, this.createChartConfig());
+    });
+  }
+
+  private createChartConfig(): ChartConfiguration {
+    const { lowAdvisedCFS: low, highAdvisedCFS: high } = this.riverDetail || {};
+    const latest = this.levels[this.levels.length - 1];
+    const isMobile = window.innerWidth <= 500;
+    const unitDisplay = getDisplayUnit(latest?.unitCode, isMobile);
+
+    return {
+      type: "line",
+      data: {
         labels: this.levels.map(l => new Date(l.timestamp)),
         datasets: [{
-          label: `${this.getDisplayUnit(this.levels[0]?.unitCode)}`,
+          label: getDisplayUnit(this.levels[0]?.unitCode),
           data: this.levels.map(l => l.value),
           borderColor: "rgb(75, 192, 192)",
           tension: 0.1,
           fill: false,
         }],
-      };
-
-      const config = this.buildChartConfig(chartData);
-      this.chart = new Chart(canvas, config);
-    });
-  }
-
-  // Public method to rebuild chart after DOM reordering
-  public rebuildChart(): void {
-    if (this.levels.length > 0 && !this.isLoading && !this.error) {
-      this.renderChart();
-    }
-  }
-
-  private buildChartConfig(chartData: ChartData): ChartConfiguration {
-    const { lowAdvisedCFS: low, highAdvisedCFS: high } = this.riverDetail || {};
-    const latest = this.levels[this.levels.length - 1];
-
-    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 500;
-    const unitForDisplay = isMobile ? this.getShortDisplayUnit(latest?.unitCode) : this.getDisplayUnit(latest?.unitCode);
-    const subtitleFontSize = isMobile ? 12 : 14;
-
-    return {
-      type: "line",
-      data: chartData,
+      },
       options: {
         responsive: true,
         maintainAspectRatio: true,
-        aspectRatio: 1.5, // Default is 2. Smaller value makes chart taller for its width.
+        aspectRatio: 1.5,
         scales: {
           x: {
             type: "time",
             time: {
               unit: "day",
-              tooltipFormat: "MMM d, yyyy h:mm a", // Changed to 12-hour format with AM/PM
-              displayFormats: { // Added to ensure axis labels also use 12-hour format if hours are shown
-                hour: "h a",
-                minute: "h:mm a",
-                second: "h:mm:ss a"
-                // You can add other formats (day, week, month, etc.) if needed
-              }
+              tooltipFormat: "MMM d, yyyy h:mm a",
+              displayFormats: { hour: "h a", minute: "h:mm a", second: "h:mm:ss a" }
             },
             title: { display: true, text: "Time" },
           },
           y: {
-            title: { display: true, text: unitForDisplay },
+            title: { display: true, text: unitDisplay },
             grace: "5%",
           },
         },
@@ -289,55 +196,49 @@ export class RiverLevelChart extends LitElement {
           legend: { display: false },
           subtitle: {
             display: !!latest,
-            text: latest ? `Current Flow: ${latest.value} ${unitForDisplay}` : "",
+            text: latest ? `Current Flow: ${latest.value} ${unitDisplay}` : "",
             color: latest ? getCurrentLevelColor(latest.value, low, high) : CHART_COLORS.text.subtitleDefault,
-            font: { size: subtitleFontSize, weight: "bold" },
+            font: { size: isMobile ? 12 : 14, weight: "bold" },
             padding: { bottom: 10 },
           },
-          annotation: {
-            annotations: this.buildAnnotations(low, high),
-          },
+          annotation: { annotations: this.createAnnotations(low, high) },
         },
       },
     };
   }
 
-  private buildAnnotations(low: number | undefined, high: number | undefined): AnnotationOptions[] {
+  private createAnnotations(low?: number, high?: number): AnnotationOptions[] {
     const annotations: AnnotationOptions[] = [];
     const common = { borderWidth: 0, drawTime: "beforeDatasetsDraw" as const };
+    const lineCommon = { borderWidth: 1.5, borderDash: [6, 6] };
+    const labelCommon = { display: true, position: "start" as const, color: "white", font: { size: 10 }, padding: 3 };
 
     // Background bands
-    if (typeof low === "number") {
+    if (low !== undefined) {
       annotations.push({ type: "box", yMax: low, backgroundColor: CHART_COLORS.bands.belowLow, ...common });
     }
-
-    if (typeof low === "number" && typeof high === "number" && low < high) {
+    if (low !== undefined && high !== undefined && low < high) {
       annotations.push({ type: "box", yMin: low, yMax: high, backgroundColor: CHART_COLORS.bands.optimal, ...common });
-    } else if (typeof low === "number") {
+    } else if (low !== undefined) {
       annotations.push({ type: "box", yMin: low, backgroundColor: CHART_COLORS.bands.optimal, ...common });
-    } else if (typeof high === "number") {
+    } else if (high !== undefined) {
       annotations.push({ type: "box", yMax: high, backgroundColor: CHART_COLORS.bands.optimal, ...common });
     }
-
-    if (typeof high === "number") {
+    if (high !== undefined) {
       annotations.push({ type: "box", yMin: high, backgroundColor: CHART_COLORS.bands.aboveHigh, ...common });
     }
 
     // Threshold lines
-    const lineCommon = { borderWidth: 1.5, borderDash: [6, 6] };
-    const label = { display: true, position: "start" as const, color: "white", font: { size: 10 }, padding: 3 };
-
-    if (typeof low === "number") {
+    if (low !== undefined) {
       annotations.push({
         type: "line", yMin: low, yMax: low, borderColor: CHART_COLORS.lines.low, ...lineCommon,
-        label: { ...label, content: `Low: ${low}`, backgroundColor: CHART_COLORS.lines.low },
+        label: { ...labelCommon, content: `Low: ${low}`, backgroundColor: CHART_COLORS.lines.low },
       });
     }
-
-    if (typeof high === "number") {
+    if (high !== undefined) {
       annotations.push({
         type: "line", yMin: high, yMax: high, borderColor: CHART_COLORS.lines.high, ...lineCommon,
-        label: { ...label, content: `High: ${high}`, backgroundColor: CHART_COLORS.lines.high },
+        label: { ...labelCommon, content: `High: ${high}`, backgroundColor: CHART_COLORS.lines.high },
       });
     }
 
@@ -355,47 +256,64 @@ export class RiverLevelChart extends LitElement {
     this.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  public rebuildChart(): void {
+    if (this.levels.length > 0 && !this.isLoading && !this.error) {
+      this.renderChart();
+    }
+  }
+
+  private renderDetails() {
+    if (!this.riverDetail) return null;
+
+    const { americanWhitewaterLink, lowAdvisedCFS, highAdvisedCFS } = this.riverDetail;
+    const showFlowRange = !(lowAdvisedCFS === 0 && highAdvisedCFS === 0);
+
+    return html`
+      <div class="details">
+        ${americanWhitewaterLink ? html`
+          <p><a href="${americanWhitewaterLink}" target="_blank">American Whitewater</a></p>
+        ` : ''}
+        ${showFlowRange ? html`
+          <p><strong>Advised Flow:</strong> ${lowAdvisedCFS ?? "N/A"} - ${highAdvisedCFS ?? "N/A"} CFS</p>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  private renderDetailsBelow() {
+    if (!this.riverDetail) return null;
+
+    const { comments, gaugeSource, localWeatherNOAA } = this.riverDetail;
+
+    return html`
+      <div class="details-below">
+        ${comments ? html`
+          <p><strong>Comments:</strong> ${unsafeHTML(linkify(comments))}</p>
+        ` : ''}
+        ${gaugeSource || localWeatherNOAA ? html`
+          <p>
+            ${gaugeSource ? html`<strong>Gauge:</strong> <a href="${gaugeSource}" target="_blank">Link</a>` : ''}
+            ${gaugeSource && localWeatherNOAA ? ' | ' : ''}
+            ${localWeatherNOAA ? html`<strong>Weather:</strong> <a href="${localWeatherNOAA}" target="_blank">NOAA</a>` : ''}
+          </p>
+        ` : ''}
+      </div>
+    `;
+  }
+
   render() {
     const slug = slugify(this.displayName);
 
     return html`
-      <div id="${slug}" @click=${this.handleClick} style="cursor: pointer;" tabindex="0">
+      <div id="${slug}" @click=${this.handleClick} tabindex="0">
         <h2>${this.displayName}</h2>
+        ${this.renderDetails()}
 
-        ${this.riverDetail ? html`
-          <div class="details">
-            ${this.riverDetail.americanWhitewaterLink ? html`
-              <p><a href="${this.riverDetail.americanWhitewaterLink}" target="_blank">American Whitewater</a></p>
-            ` : ""}
-            ${!(this.riverDetail.lowAdvisedCFS === 0 && this.riverDetail.highAdvisedCFS === 0) ? html`
-              <p><strong>Advised Flow:</strong> ${this.riverDetail.lowAdvisedCFS ?? "N/A"} - ${this.riverDetail.highAdvisedCFS ?? "N/A"} CFS</p>
-            ` : ""}
-          </div>
-        ` : ""}
+        ${this.isLoading ? html`<div class="loading">Loading data...</div>` :
+          this.error ? html`<div class="error">Error: ${this.error}</div>` :
+          this.levels.length ? html`<canvas></canvas>` : null}
 
-        ${this.isLoading ? html`
-          <div class="loading">Loading data...</div>
-        ` : this.error ? html`
-          <div class="error">Error: ${this.error}</div>
-        ` : this.levels.length ? html`
-          <canvas></canvas>
-        ` : null}
-
-        ${this.riverDetail ? html`
-          <div class="details-below">
-            ${this.riverDetail.comments ? html`
-              <p><strong>Comments:</strong> ${unsafeHTML(linkify(this.riverDetail.comments))}</p>
-            ` : ""}
-            ${this.riverDetail.gaugeSource && this.riverDetail.localWeatherNOAA ? html`
-              <p><strong>Gauge:</strong> <a href="${this.riverDetail.gaugeSource}" target="_blank">Link</a> | <strong>Weather:</strong> <a href="${this.riverDetail.localWeatherNOAA}" target="_blank">NOAA</a></p>
-            ` : this.riverDetail.gaugeSource ? html`
-              <p><strong>Gauge:</strong> <a href="${this.riverDetail.gaugeSource}" target="_blank">Link</a></p>
-            ` : this.riverDetail.localWeatherNOAA ? html`
-              <p><strong>Weather:</strong> <a href="${this.riverDetail.localWeatherNOAA}" target="_blank">NOAA</a></p>
-            ` : ""
-            }
-          </div>
-        ` : ""}
+        ${this.renderDetailsBelow()}
       </div>
     `;
   }
