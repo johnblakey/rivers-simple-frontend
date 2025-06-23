@@ -1,10 +1,11 @@
-import { getRiverDetails } from './utility/data';
-import type { RiverDetail } from './utility/data';
-import { RiverLevelChart } from './components/river-level-chart';
+import { getRiverDetails } from './utility/data-service.ts';
+import type { RiverDetail } from './utility/data-service.ts';
+import { RiverLevelChart } from './components/river-chart.ts';
 import { slugify } from './utility/string-utils';
 import { FavoriteButton } from './components/favorite-button.ts'; // Import FavoriteButton
 import './utility/auth-ui'; // Import the auth UI component
 import { authService } from './utility/auth-service';
+import { userPreferencesService } from './utility/user-preferences-service';
 
 console.info("Welcome to the rivers.johnblakey.org. Email me at johnblakeyorg@gmail.com if you find any bugs, security issues, or have feedback. Blunt tone welcome.");
 
@@ -56,7 +57,7 @@ async function initializeApp() {
       chartsContainer.textContent = 'No river details found.';
       return;
     }
-    renderCharts();
+    renderCharts(allRiverDetails);
   } catch (error) {
     console.error("Failed to initialize:", error);
     chartsContainer.textContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
@@ -131,7 +132,7 @@ function updateSortToggleVisuals() {
   });
 }
 
-function renderCharts() {
+function renderCharts(_riverDetails: RiverDetail[]) {
   if (!chartsContainer) return;
 
   chartsContainer.innerHTML = '';
@@ -160,67 +161,108 @@ function renderCharts() {
     chartsContainer.appendChild(chartWrapper); // Add wrapper to container
   }
 
-  // Apply initial sorting
-  applySorting();
+  // Use polling approach to wait for charts to load before sorting
+  waitForChartsToLoad().then(() => {
+    applySorting();
+  });
 }
 
-async function applySorting() {
-  if (!chartsContainer) return;
-
-  const chartWrappers = Array.from(chartsContainer.children) as HTMLElement[];
-
-  let favoriteSiteCodes: string[] = [];
-  if (authService.isSignedIn()) {
-    try {
-      const { userPreferencesService } = await import('./utility/user-preferences-service');
-      const preferences = await userPreferencesService.getUserPreferences();
-      favoriteSiteCodes = preferences?.favoriteRivers || [];
-    } catch (error) {
-      console.error('Error fetching favorites for sorting:', error);
-      // Continue without favorites if fetching fails, items will be sorted without pinning.
-    }
+/**
+ * Polls until all charts have loaded their data (indicated by non-zero sortKeyRunnable values)
+ * @param maxAttempts Maximum number of polling attempts before giving up
+ * @param intervalMs Milliseconds between polling attempts
+ * @returns Promise that resolves when all charts are loaded or rejects on timeout
+ */
+async function waitForChartsToLoad(maxAttempts: number = 50, intervalMs: number = 100): Promise<void> {
+  if (!chartsContainer) {
+    throw new Error('Charts container not found');
   }
 
-  const isSiteFavorite = (siteCode: string) => favoriteSiteCodes.includes(siteCode);
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const chartElements = Array.from(chartsContainer.querySelectorAll('river-level-chart')) as RiverLevelChart[];
 
-  chartWrappers.sort((aWrapper, bWrapper) => {
-    const aChart = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
-    const bChart = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
-
-    if (!aChart || !bChart) return 0; // Should not happen if wrappers are structured correctly
-
-    const aIsFav = isSiteFavorite(aChart.siteCode);
-    const bIsFav = isSiteFavorite(bChart.siteCode);
-
-    // Pinning logic: favorites always come before non-favorites
-    if (aIsFav && !bIsFav) return -1;
-    if (!aIsFav && bIsFav) return 1;
-
-    // If both are favorites or both are non-favorites, apply current sort order
-    if (currentSortOrder === 'alphabetical') {
-      return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
-    } else if (currentSortOrder === 'runnable') {
-      const statusDiff = aChart.sortKeyRunnable - bChart.sortKeyRunnable;
-      if (statusDiff !== 0) return statusDiff;
-      return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
+    if (chartElements.length === 0) {
+      // No charts found yet, continue polling
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+      continue;
     }
-    return 0;
-  });
 
-  // Re-append in sorted order
-  chartWrappers.forEach(wrapper => chartsContainer!.appendChild(wrapper));
+    // A chart's data is considered loaded once its fetchData method has completed.
+    // We use a public property on the chart component to signal this.
+    const allChartsLoaded = chartElements.every(chart => chart.loadCompleted);
 
-  // Rebuild all charts after DOM reordering
-  setTimeout(() => {
-    chartWrappers.forEach(wrapper => {
-      const chart = wrapper.querySelector('river-level-chart') as RiverLevelChart;
-      if (chart && typeof chart.rebuildChart === 'function') {
-        chart.rebuildChart();
-      }
+    if (allChartsLoaded) {
+      console.info(`All ${chartElements.length} charts finished loading after ${attempt + 1} polling attempts`);
+      return; // All charts are loaded
+    }
+
+    // Wait before next polling attempt
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  }
+
+  // If we get here, we've exceeded maxAttempts
+  console.warn(`Timeout waiting for charts to load after ${maxAttempts} attempts. Proceeding with sorting anyway.`);
+  // Don't throw an error - just proceed with sorting even if not all charts are loaded
+}
+
+async function applySorting(): Promise<void> {
+    if (!chartsContainer) return;
+
+    const chartWrappers = Array.from(chartsContainer.children) as HTMLElement[];
+    const sortedWrappers = await sortChartWrappers(chartWrappers);
+
+    // Re-append in sorted order
+    sortedWrappers.forEach(wrapper => chartsContainer!.appendChild(wrapper));
+
+    // Rebuild all charts after DOM reordering
+    rebuildCharts(sortedWrappers);
+
+    handleHashScroll();
+}
+
+async function sortChartWrappers(chartWrappers: HTMLElement[]): Promise<HTMLElement[]> {
+    let favoriteSiteCodes: string[] = [];
+    if (authService.isSignedIn()) {
+        try {
+            const preferences = await userPreferencesService.getUserPreferences();
+            favoriteSiteCodes = preferences?.favoriteRivers || [];
+        } catch (error) {
+            console.error('Error fetching favorites for sorting:', error);
+            // Continue without favorites if fetching fails, items will be sorted without pinning.
+        }
+    }
+
+    const isSiteFavorite = (siteCode: string) => favoriteSiteCodes.includes(siteCode);
+
+    return [...chartWrappers].sort((aWrapper, bWrapper) => {
+        const aChart = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
+        const bChart = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
+
+        if (!aChart || !bChart) return 0; // Should not happen if wrappers are structured correctly
+
+        const aIsFav = isSiteFavorite(aChart.siteCode);
+        const bIsFav = isSiteFavorite(bChart.siteCode);
+
+        // Pinning logic: favorites always come before non-favorites
+        if (aIsFav && !bIsFav) return -1;
+        if (!aIsFav && bIsFav) return 1;
+
+        // If both are favorites or both are non-favorites, apply current sort order
+        if (currentSortOrder === 'alphabetical') {
+            return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
+        } else if (currentSortOrder === 'runnable') {
+            const statusDiff = aChart.sortKeyRunnable - bChart.sortKeyRunnable;
+            if (statusDiff !== 0) return statusDiff;
+            return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
+        }
+        return 0;
     });
-  }, 50);
+}
 
-  handleHashScroll();
+function rebuildCharts(chartWrappers: HTMLElement[]): void {
+    setTimeout(() => {
+        chartWrappers.forEach(wrapper => (wrapper.querySelector('river-level-chart') as RiverLevelChart)?.rebuildChart());
+    }, 50);
 }
 
 function handleHashScroll() {
