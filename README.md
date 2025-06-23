@@ -126,21 +126,12 @@ Increment version tag found in link below (e.g. TAG_NAME=1 -> 2) in command belo
 <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=Abz1yw&project=river-level-0>
 
 ```bash
-# v2 - Increment last version tag
-gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=30
-
-# Deprecated - Submit build from your local machine - will throw an error expects a tag
-gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest
+gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=31
 ```
 
 See builds and logging at <https://console.cloud.google.com/cloud-build/builds?referrer=search&inv=1&invt=AbzdQA&walkthrough_id=iam--create-service-account&project=river-level-0>
 
 ### Tagging
-
-#### Deprecated - Initial v1 Tag
-
-<https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=AbznXQ&project=river-level-0>
-If passes initial test, go into the cloud console > artifact registry > rivers-lit > add tag to "Latest" tag > v18
 
 #### GitHub v0.1.0 Tag - Manual
 
@@ -149,7 +140,7 @@ If passing tests, commit these Readme deployment step updates to the test branch
 To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-frontend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.6 > "Describe new features or bugfixes"
 
 Push created local tag to GitHub - Manually
-$  git push origin v0.1.6
+$  git push origin v0.1.7
 Note that the tag was pushed to GitHub
 
 Add Docker tag
@@ -256,7 +247,7 @@ gcloud projects get-iam-policy river-level-0 \
 
 For service accounts go to Google Cloud console > river-levels-0 - project > IAM > Service Accounts > follow prompts to create a service account name > note the roles of the IAM account to copy > go to Permissions > Roles > type in name of role from docs or error messsage on role to add to then test if issue resolves. For example I had to use trial and error on cloudbuild.yaml deploy to see needed permissions. Annoying when a deployment takes a couple minutes between role tests.
 
-#### Deprecated tagging steps
+#### Manual Tagging
 
 TODO - find the exact docker image used in Cloud Run instance
 $ docker tag rivers-lit us-west1-docker.pkg.dev/river-level-0/rivers-frontend/rivers-lit:v0.1.5
