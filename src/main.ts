@@ -161,8 +161,48 @@ function renderCharts(_riverDetails: RiverDetail[]) {
     chartsContainer.appendChild(chartWrapper); // Add wrapper to container
   }
 
-  // Apply initial sorting
-  applySorting();
+  // Use polling approach to wait for charts to load before sorting
+  waitForChartsToLoad().then(() => {
+    applySorting();
+  });
+}
+
+/**
+ * Polls until all charts have loaded their data (indicated by non-zero sortKeyRunnable values)
+ * @param maxAttempts Maximum number of polling attempts before giving up
+ * @param intervalMs Milliseconds between polling attempts
+ * @returns Promise that resolves when all charts are loaded or rejects on timeout
+ */
+async function waitForChartsToLoad(maxAttempts: number = 50, intervalMs: number = 100): Promise<void> {
+  if (!chartsContainer) {
+    throw new Error('Charts container not found');
+  }
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const chartElements = Array.from(chartsContainer.querySelectorAll('river-level-chart')) as RiverLevelChart[];
+
+    if (chartElements.length === 0) {
+      // No charts found yet, continue polling
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+      continue;
+    }
+
+    // A chart's data is considered loaded once its fetchData method has completed.
+    // We use a public property on the chart component to signal this.
+    const allChartsLoaded = chartElements.every(chart => chart.loadCompleted);
+
+    if (allChartsLoaded) {
+      console.info(`All ${chartElements.length} charts finished loading after ${attempt + 1} polling attempts`);
+      return; // All charts are loaded
+    }
+
+    // Wait before next polling attempt
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  }
+
+  // If we get here, we've exceeded maxAttempts
+  console.warn(`Timeout waiting for charts to load after ${maxAttempts} attempts. Proceeding with sorting anyway.`);
+  // Don't throw an error - just proceed with sorting even if not all charts are loaded
 }
 
 async function applySorting(): Promise<void> {

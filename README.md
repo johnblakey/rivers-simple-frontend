@@ -127,7 +127,7 @@ Increment version tag found in link below (e.g. TAG_NAME=1 -> 2) in command belo
 
 ```bash
 # v2 - Increment last version tag
-gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=29
+gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=30
 
 # Deprecated - Submit build from your local machine - will throw an error expects a tag
 gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest

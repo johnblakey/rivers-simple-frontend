@@ -33,6 +33,9 @@ export class RiverLevelChart extends LitElement {
   @state() private levels: RiverLevel[] = [];
   @state() private isLoading = false;
   @state() private error: string | null = null;
+  @state() private hasEmittedLoadedEvent = false; // Track if we've already emitted the event
+  @state() private hasEmittedErrorEvent = false; // Track if we've already emitted an error event
+  @state() private isLoadComplete = false;
 
   private chart: Chart | null = null;
   private static cache: Record<string, RiverLevel[]> = {};
@@ -95,8 +98,8 @@ export class RiverLevelChart extends LitElement {
 
   get sortKeyRunnable(): number {
     if (this.isLoading) return 4;
-    if (!this.levels.length || this.latestValue === null) return 5;
     if (!this.riverDetail) return 3;
+    if (!this.levels.length || this.latestValue === null) return 5;
 
     const { lowAdvisedCFS: low, highAdvisedCFS: high } = this.riverDetail;
     const value = this.latestValue;
@@ -110,13 +113,21 @@ export class RiverLevelChart extends LitElement {
     return 2;
   }
 
+  /** Indicates whether the initial data fetch for this chart has completed. */
+  get loadCompleted(): boolean {
+    return this.isLoadComplete;
+  }
+
   protected async willUpdate(changed: Map<string | number | symbol, unknown>) {
     if ((changed.has("siteCode") || changed.has("riverDetail")) && this.siteCode && this.riverDetail) {
+      this.hasEmittedLoadedEvent = false; // Reset the flag when new data is being loaded
+      this.hasEmittedErrorEvent = false; // Reset the error flag as well
+      this.isLoadComplete = false; // Reset load completion state
       await this.fetchData();
     }
   }
 
-  protected updated() { this.renderChart(); }
+  protected updated() { this.renderChart(); this.checkAndEmitLoadedEvent(); }
   disconnectedCallback() { super.disconnectedCallback(); this.destroyChart(); }
 
   private async fetchData(): Promise<void> {
@@ -134,9 +145,17 @@ export class RiverLevelChart extends LitElement {
         RiverLevelChart.cache[this.siteCode] = this.levels;
       }
     } catch (err) {
-      this.error = err instanceof Error ? err.message : "Failed to load data";
+      const errorMessage = err instanceof Error ? err.message : "Failed to load data";
+      this.error = errorMessage;
+      // Emit chart-error event immediately if an error occurs and hasn't been emitted yet
+      if (!this.hasEmittedErrorEvent) {
+        this.hasEmittedErrorEvent = true;
+        this.dispatchEvent(new CustomEvent('chart-error', { bubbles: true, detail: { siteCode: this.siteCode, error: errorMessage, displayName: this.displayName } }));
+        console.error(`Chart error event emitted for: ${this.displayName} - ${errorMessage}`);
+      }
     } finally {
       this.isLoading = false;
+      this.isLoadComplete = true;
     }
   }
 
@@ -153,6 +172,35 @@ export class RiverLevelChart extends LitElement {
     requestAnimationFrame(() => {
       this.chart = new Chart(canvas, this.createChartConfig());
     });
+  }
+
+  /**
+   * Check if the chart is fully loaded and emit the loaded event if it hasn't been emitted yet
+   */
+  private checkAndEmitLoadedEvent(): void {
+    // Only emit once per data load cycle
+    if (this.hasEmittedLoadedEvent) return;
+
+    // Chart is considered loaded if:
+    // 1. Not loading
+    // 2. No error
+    // 3. Has data
+    // 4. Has riverDetail (needed for sorting)
+    // 5. sortKeyRunnable is calculated (not undefined)
+    const isFullyLoaded = !this.isLoading &&
+                         !this.error &&
+                         this.levels.length > 0 &&
+                         this.riverDetail &&
+                         this.sortKeyRunnable !== undefined;
+
+    if (isFullyLoaded) {
+      this.hasEmittedLoadedEvent = true;
+      this.dispatchEvent(new CustomEvent('chart-loaded', {
+        bubbles: true,
+        detail: { siteCode: this.siteCode, sortKeyRunnable: this.sortKeyRunnable, displayName: this.displayName, hasData: this.levels.length > 0, latestValue: this.latestValue }
+      }));
+      console.log(`Chart loaded event emitted for: ${this.displayName} (sortKey: ${this.sortKeyRunnable})`);
+    }
   }
 
   private createChartConfig(): ChartConfiguration {
