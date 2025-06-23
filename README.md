@@ -126,7 +126,7 @@ Increment version tag found in link below (e.g. TAG_NAME=1 -> 2) in command belo
 <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=Abz1yw&project=river-level-0>
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=31
+gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=32
 ```
 
 See builds and logging at <https://console.cloud.google.com/cloud-build/builds?referrer=search&inv=1&invt=AbzdQA&walkthrough_id=iam--create-service-account&project=river-level-0>
@@ -361,8 +361,10 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Change ft3/s to cubic feet per second CFS~~
 - ~~Use Apple style toggle for sorting vs button~~
 - ~~Fix chart label overlap on mobile~~
+- Make the condensed table view
+- Make modified expanded view
+- Make ability to add alerts options
 - Add private notes
-- Rearrange how text is displayed in river-charts > shrink default expand when clicked
 - Allow manually setting timezone (default is use the client to set it)
 - Allow rearranging (arrows? drag them?) favorite charts pinned to top and save the new arrangement
 - Reduce roles on Service accounts by replacing with user created simplified service account <https://console.cloud.google.com/iam-admin/iam?inv=1&invt=AbzeuQ&project=river-level-0> and <https://console.cloud.google.com/iam-admin/serviceaccounts?inv=1&invt=AbzeuQ&project=river-level-0> theres an auto-generated account
