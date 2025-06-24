@@ -126,7 +126,7 @@ Increment version tag found in link below (e.g. TAG_NAME=1 -> 2) in command belo
 <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=Abz1yw&project=river-level-0>
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=32
+gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=33
 ```
 
 See builds and logging at <https://console.cloud.google.com/cloud-build/builds?referrer=search&inv=1&invt=AbzdQA&walkthrough_id=iam--create-service-account&project=river-level-0>

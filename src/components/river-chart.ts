@@ -130,6 +130,14 @@ export class RiverLevelChart extends LitElement {
   }
   disconnectedCallback() { super.disconnectedCallback(); this.destroyChart(); }
 
+  private dispatchChartLoadedEvent(): void {
+    this.dispatchEvent(new CustomEvent('chart-loaded', {
+      bubbles: true,
+      composed: true,
+      detail: { siteCode: this.siteCode }
+    }));
+  }
+
   private async fetchData(): Promise<void> {
     if (!this.siteCode) return;
 
@@ -150,6 +158,8 @@ export class RiverLevelChart extends LitElement {
     } finally {
       this.isLoading = false;
       this.isLoadComplete = true;
+      // Emit the chart-loaded event after data loading is complete
+      this.dispatchChartLoadedEvent();
     }
   }
 
