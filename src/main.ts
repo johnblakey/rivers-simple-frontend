@@ -178,10 +178,15 @@ function scheduleResort(reason: string, delay: number = 300) {
     clearTimeout(pendingResortTimeout);
   }
 
-  pendingResortTimeout = setTimeout(() => {
+  pendingResortTimeout = setTimeout(async () => {
     console.log(`Resorting charts (reason: ${reason}, loaded: ${chartsLoadedCount}/${allRiverDetails.length})`);
-    applySorting();
+    await applySorting();
     pendingResortTimeout = null;
+
+    // If the initial load is complete, the sort order is final, so it's safe to scroll.
+    if (isInitialSortComplete) {
+      handleHashScroll();
+    }
   }, delay);
 }
 
@@ -191,16 +196,21 @@ function scheduleResort(reason: string, delay: number = 300) {
 function handleChartLoaded() {
   chartsLoadedCount++;
 
-  // Only trigger resorts after initial load if we're in runnable sort mode
-  // and we haven't completed the initial sort yet
-  if (currentSortOrder === 'runnable') {
+  const allChartsAreLoaded = chartsLoadedCount >= allRiverDetails.length;
+
+  // While charts are loading, only re-sort if in 'runnable' mode.
+  if (currentSortOrder === 'runnable' && !isInitialSortComplete) {
     scheduleResort('chart-loaded');
   }
 
   // Mark initial sort as complete once all charts are loaded
-  if (chartsLoadedCount >= allRiverDetails.length && !isInitialSortComplete) {
+  if (allChartsAreLoaded && !isInitialSortComplete) {
     isInitialSortComplete = true;
     console.log('All charts loaded, initial sorting complete');
+    // Schedule one final sort. For 'runnable', this is debounced with any
+    // preceding 'chart-loaded' sorts. For 'alphabetical', this ensures
+    // the scroll-to-hash logic runs after the final state is set.
+    scheduleResort('initial-load-complete');
   }
 }
 
@@ -227,8 +237,6 @@ async function applySorting(): Promise<void> {
     // Rebuild charts after DOM reordering
     rebuildCharts(sortedWrappers);
   }
-
-  handleHashScroll();
 }
 
 async function sortChartWrappers(chartWrappers: HTMLElement[]): Promise<HTMLElement[]> {
@@ -299,9 +307,12 @@ function handleHashScroll() {
 
   if (targetWrapper) {
     hasScrolledToInitialHash = true; // Mark that we've scrolled to the initial hash
-    setTimeout(() => {
+    // Use requestAnimationFrame to ensure the browser has completed layout calculations
+    // after the final sort before we attempt to scroll. This is more reliable
+    // than a fixed setTimeout delay.
+    requestAnimationFrame(() => {
       targetWrapper.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 150);
+    });
   }
 }
 
