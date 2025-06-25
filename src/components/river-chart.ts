@@ -127,6 +127,11 @@ export class RiverLevelChart extends LitElement {
       border-radius: 4px;
       border: 1px solid #eee;
       min-height: 40px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .notes-section .note-display:hover {
+      background-color: #f0f0f0;
     }
     .notes-actions {
       margin-top: 8px;
@@ -378,8 +383,8 @@ export class RiverLevelChart extends LitElement {
 
   private handleClick(e: Event): void {
     const target = e.target as HTMLElement;
-    // Do not trigger navigation if the user is interacting with a link, button, or textarea.
-    if (target.closest('a, button, textarea')) {
+    // Do not trigger navigation if the user is interacting with a link, button, textarea, or the notes section.
+    if (target.closest('a, button, textarea, .notes-section')) {
       return;
     }
     const slug = slugify(this.displayName);
@@ -448,7 +453,7 @@ export class RiverLevelChart extends LitElement {
                 </div>
               `
             : html`
-                <div class="note-display">
+                <div class="note-display" @click=${this.handleNoteEdit} title="Click to edit note">
                   ${this.userNote ? html`${this.userNote}` : html`<em style="color: #666;">No notes for this river yet.</em>`}
                 </div>
                 <div class="notes-actions">
