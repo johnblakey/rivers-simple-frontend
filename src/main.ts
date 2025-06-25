@@ -1,7 +1,7 @@
 import { getRiverDetails } from './utility/data-service.ts';
 import type { RiverDetail } from './utility/data-service.ts';
 import { RiverLevelChart } from './components/river-chart.ts';
-import { slugify } from './utility/string-utils';
+import { slugify } from './utility/slugify-string.ts';
 import { FavoriteButton } from './components/favorite-button.ts';
 import './utility/auth-ui';
 import { authService } from './utility/auth-service';
@@ -20,6 +20,7 @@ let alphabeticalSortOption: HTMLElement | null = null;
 let isInitialSortComplete = false;
 let pendingResortTimeout: number | null = null;
 let chartsLoadedCount = 0;
+let hasScrolledToInitialHash = false; // New state variable to track initial scroll
 
 async function initializeApp() {
   const appHost = document.getElementById('charts-host');
@@ -283,6 +284,10 @@ function rebuildCharts(chartWrappers: HTMLElement[]): void {
 }
 
 function handleHashScroll() {
+  // Only scroll to the hash on the initial page load.
+  // This prevents re-scrolling if applySorting is called multiple times (e.g., due to favorites changing).
+  if (hasScrolledToInitialHash) return;
+
   const hash = window.location.hash.substring(1);
   if (!hash || !chartsContainer) return;
 
@@ -293,6 +298,7 @@ function handleHashScroll() {
   });
 
   if (targetWrapper) {
+    hasScrolledToInitialHash = true; // Mark that we've scrolled to the initial hash
     setTimeout(() => {
       targetWrapper.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 150);

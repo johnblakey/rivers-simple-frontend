@@ -5,7 +5,7 @@ import AnnotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotat
 import "chartjs-adapter-date-fns";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { getRiverLevelsBySiteCode, type RiverLevel, type RiverDetail } from "../utility/data-service";
-import { slugify } from "../utility/string-utils";
+import { slugify } from "../utility/slugify-string";
 import { userPreferencesService } from "../utility/user-preferences-service";
 import { authService } from "../utility/auth-service";
 import { CHART_COLORS } from "../utility/chart-colors";
@@ -389,8 +389,7 @@ export class RiverLevelChart extends LitElement {
       return;
     }
     const slug = slugify(this.displayName);
-    history.replaceState(null, "", `#${slug}`);
-    this.scrollIntoView({ behavior: "smooth", block: "start" });
+    history.replaceState(null, "", `#${slug}`); // Update URL hash without scrolling
   }
 
   public rebuildChart(): void {
