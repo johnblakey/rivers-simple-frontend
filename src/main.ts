@@ -141,6 +141,7 @@ function renderCharts(_riverDetails: RiverDetail[]) {
   isInitialSortComplete = false;
 
   for (const detail of allRiverDetails) {
+    // A siteName is the minimum required property to render a chart card.
     if (!detail.siteName?.trim()) {
       console.warn(`Skipping river with missing siteName:`, detail);
       continue;
@@ -152,6 +153,7 @@ function renderCharts(_riverDetails: RiverDetail[]) {
 
     const chartElement = new RiverLevelChart();
     chartElement.siteCode = detail.siteCode;
+    chartElement.riverId = detail.siteCode || `db-id-${detail.id}`; // Use siteCode if available, otherwise fallback to db id
     chartElement.riverDetail = detail;
 
     const favoriteButton = document.createElement('favorite-button') as FavoriteButton;

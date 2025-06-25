@@ -30,6 +30,7 @@ const getDisplayUnit = (unitCode?: string, short = false) => {
 @customElement("river-level-chart")
 export class RiverLevelChart extends LitElement {
   @property({ type: String }) siteCode = "";
+  @property({ type: String }) riverId = "";
   @property({ type: Object }) riverDetail: RiverDetail | null = null;
 
   @state() private levels: RiverLevel[] = [];
@@ -252,14 +253,14 @@ export class RiverLevelChart extends LitElement {
   }
 
   private async fetchUserNote(): Promise<void> {
-    if (!this.siteCode || !this.isSignedIn) {
+    if (!this.riverId || !this.isSignedIn) {
       this.userNote = null;
       return;
     }
     this.noteIsLoading = true;
     this.noteError = null;
     try {
-      const noteData = await userPreferencesService.getUserNote(this.siteCode);
+      const noteData = await userPreferencesService.getUserNote(this.riverId);
       // The service returns null on auth error, or an object with a note property.
       this.userNote = noteData?.note ?? null;
     } catch (error) {
@@ -408,7 +409,7 @@ export class RiverLevelChart extends LitElement {
   }
 
   private async handleNoteSave() {
-    if (!this.siteCode) return;
+    if (!this.riverId) return;
 
     const textarea = this.shadowRoot?.querySelector('.notes-section textarea') as HTMLTextAreaElement;
     if (!textarea) return;
@@ -418,12 +419,12 @@ export class RiverLevelChart extends LitElement {
     this.noteError = null;
 
     try {
-      await userPreferencesService.saveUserNote(this.siteCode, newNote);
+      await userPreferencesService.saveUserNote(this.riverId, newNote);
       this.userNote = newNote.trim() ? newNote : null; // Treat empty save as null
       this.isEditingNote = false;
     } catch (error) {
       this.noteError = "Failed to save note.";
-      console.error(`Failed to save note for ${this.siteCode}`, error);
+      console.error(`Failed to save note for ${this.riverId}`, error);
     } finally {
       this.noteIsLoading = false;
     }

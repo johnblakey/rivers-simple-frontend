@@ -9,7 +9,7 @@ export interface UserPreferences {
 
 export interface UserNote {
   note: string;
-  siteCode: string;
+  riverId: string;
   userId?: string;
   userEmail?: string;
   createdAt?: string; // ISO Date string
@@ -119,9 +119,9 @@ Ensure the VITE_API_BASE_URL environment variable is set and accessible to the V
     }
   }
 
-  async getUserNote(siteCode: string): Promise<UserNote | null> {
+  async getUserNote(riverId: string): Promise<UserNote | null> {
     try {
-      const response = await this.makeAuthenticatedRequest(`${this.baseUrl}/user/notes/${siteCode}`);
+      const response = await this.makeAuthenticatedRequest(`${this.baseUrl}/user/notes/${riverId}`);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch user note: ${response.statusText}`);
@@ -132,15 +132,15 @@ Ensure the VITE_API_BASE_URL environment variable is set and accessible to the V
       if (error instanceof Error && error.message.includes('authenticated')) {
         return null;
       }
-      console.error(`Error fetching user note for site ${siteCode}:`, error);
+      console.error(`Error fetching user note for river ${riverId}:`, error);
       throw error; // Re-throw other errors
     }
   }
 
-  async saveUserNote(siteCode: string, note: string): Promise<void> {
+  async saveUserNote(riverId: string, note: string): Promise<void> {
     try {
       const response = await this.makeAuthenticatedRequest(
-        `${this.baseUrl}/user/notes/${siteCode}`,
+        `${this.baseUrl}/user/notes/${riverId}`,
         {
           method: 'POST', // Backend handles POST as an upsert
           body: JSON.stringify({ note })
@@ -151,15 +151,15 @@ Ensure the VITE_API_BASE_URL environment variable is set and accessible to the V
         throw new Error(`Failed to save user note: ${response.statusText}`);
       }
     } catch (error) {
-      console.error(`Error saving user note for site ${siteCode}:`, error);
+      console.error(`Error saving user note for river ${riverId}:`, error);
       throw error;
     }
   }
 
-  async deleteUserNote(siteCode: string): Promise<void> {
+  async deleteUserNote(riverId: string): Promise<void> {
     try {
       const response = await this.makeAuthenticatedRequest(
-        `${this.baseUrl}/user/notes/${siteCode}`,
+        `${this.baseUrl}/user/notes/${riverId}`,
         {
           method: 'DELETE'
         }
@@ -169,7 +169,7 @@ Ensure the VITE_API_BASE_URL environment variable is set and accessible to the V
         throw new Error(`Failed to delete user note: ${response.statusText}`);
       }
     } catch (error) {
-      console.error(`Error deleting user note for site ${siteCode}:`, error);
+      console.error(`Error deleting user note for river ${riverId}:`, error);
       throw error;
     }
   }
