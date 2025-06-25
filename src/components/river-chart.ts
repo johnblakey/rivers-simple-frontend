@@ -446,8 +446,7 @@ export class RiverLevelChart extends LitElement {
             ? html`
                 <textarea
                   aria-label="River note"
-                  .value=${this.userNote || ''}
-                ></textarea>
+                  .value=${this.userNote || ''}></textarea>
                 <div class="notes-actions">
                   <button class="save-btn" @click=${this.handleNoteSave}>Save</button>
                   <button class="cancel-btn" @click=${this.handleNoteCancel}>Cancel</button>
