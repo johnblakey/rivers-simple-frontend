@@ -235,7 +235,7 @@ export class RiverLevelChart extends LitElement {
     try {
       const noteData = await userPreferencesService.getUserNote(this.riverId);
       // The service returns null on auth error, or an object with a note property.
-      this.userNote = noteData?.note ?? null;
+      this.userNote = noteData?.note?.trim() ?? null;
     } catch (error) {
       this.noteError = "Could not load your note.";
       console.error(`Failed to fetch note for ${this.siteCode}`, error);
@@ -390,13 +390,13 @@ export class RiverLevelChart extends LitElement {
     const textarea = this.shadowRoot?.querySelector('.notes-section textarea') as HTMLTextAreaElement;
     if (!textarea) return;
 
-    const newNote = textarea.value;
+    const newNote = textarea.value.trim();
     this.noteIsLoading = true;
     this.noteError = null;
 
     try {
       await userPreferencesService.saveUserNote(this.riverId, newNote);
-      this.userNote = newNote.trim() ? newNote : null; // Treat empty save as null
+      this.userNote = newNote ? newNote : null; // Treat empty save as null
       this.isEditingNote = false;
     } catch (error) {
       this.noteError = "Failed to save note.";
@@ -429,9 +429,9 @@ export class RiverLevelChart extends LitElement {
                 </div>
               `
             : html`
-                <div class="note-display" @click=${this.handleNoteEdit} title="Click to edit note">
-                  ${this.userNote ? html`${this.userNote}` : html`<em style="color: #666;">No notes for this river yet.</em>`}
-                </div>
+                <div class="note-display" @click=${this.handleNoteEdit} title="Click to edit note">${
+                  this.userNote ? this.userNote : html`<em style="color: #666;">No notes for this river yet.</em>`
+                }</div>
                 <div class="notes-actions">
                   <button class="edit-btn" @click=${this.handleNoteEdit}>
                     ${this.userNote ? 'Edit Note' : 'Add Note'}
