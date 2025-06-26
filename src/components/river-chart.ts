@@ -5,7 +5,7 @@ import AnnotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotat
 import "chartjs-adapter-date-fns";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { getRiverLevelsBySiteCode, type RiverLevel, type RiverDetail } from "../utility/data-service";
-import { slugify } from "../utility/string-utils";
+import { slugify } from "../utility/slugify-string";
 import { userPreferencesService } from "../utility/user-preferences-service";
 import { authService } from "../utility/auth-service";
 import { CHART_COLORS } from "../utility/chart-colors";
@@ -160,23 +160,6 @@ export class RiverLevelChart extends LitElement {
   get latestValue() { return this.levels.length > 0 ? this.levels[this.levels.length - 1].value : null; }
   get hasValidRange() { return this.riverDetail && (this.riverDetail.lowAdvisedCFS || this.riverDetail.highAdvisedCFS); }
 
-  get sortKeyRunnable(): number {
-    if (this.isLoading) return 4;
-    if (!this.riverDetail) return 3;
-    if (!this.levels.length || this.latestValue === null) return 5;
-
-    const { lowAdvisedCFS: low, highAdvisedCFS: high } = this.riverDetail;
-    const value = this.latestValue;
-
-    if (low !== undefined && high !== undefined) {
-      if (low < high) return (value >= low && value <= high) ? 0 : 1;
-      if (low === high) return value === low ? 0 : 1;
-    }
-    if (low !== undefined && !high) return value >= low ? 0 : 1;
-    if (high !== undefined && !low) return value <= high ? 0 : 1;
-    return 2;
-  }
-
   /** Indicates whether the initial data fetch for this chart has completed. */
   get loadCompleted(): boolean {
     return this.isLoadComplete;
@@ -219,14 +202,6 @@ export class RiverLevelChart extends LitElement {
   }
   disconnectedCallback() { super.disconnectedCallback(); this.destroyChart(); }
 
-  private dispatchChartLoadedEvent(): void {
-    this.dispatchEvent(new CustomEvent('chart-loaded', {
-      bubbles: true,
-      composed: true,
-      detail: { siteCode: this.siteCode }
-    }));
-  }
-
   private async fetchData(): Promise<void> {
     if (!this.siteCode) return;
 
@@ -247,8 +222,6 @@ export class RiverLevelChart extends LitElement {
     } finally {
       this.isLoading = false;
       this.isLoadComplete = true;
-      // Emit the chart-loaded event after data loading is complete
-      this.dispatchChartLoadedEvent();
     }
   }
 
@@ -382,33 +355,36 @@ export class RiverLevelChart extends LitElement {
     this.chart = null;
   }
 
-  private handleClick(e: Event): void {
-    const target = e.target as HTMLElement;
-    // Do not trigger navigation if the user is interacting with a link, button, textarea, or the notes section.
-    if (target.closest('a, button, textarea, .notes-section')) {
-      return;
-    }
-    const slug = slugify(this.displayName);
-    history.replaceState(null, "", `#${slug}`);
-    this.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   public rebuildChart(): void {
     if (this.levels.length > 0 && !this.isLoading && !this.error) {
       this.renderChart();
     }
   }
 
-  private handleNoteEdit() {
+  private handleClick(e: Event): void {
+    const target = e.target as HTMLElement;
+    // Do not update URL if the user is interacting with a link, button, or textarea.
+    // Other interactions within the component (like notes) stop propagation to prevent this.
+    if (target.closest('a, button, textarea')) {
+      return;
+    }
+    const slug = slugify(this.displayName);
+    history.replaceState(null, "", `#${slug}`);
+  }
+
+  private handleNoteEdit(e: Event) {
+    e.stopPropagation();
     this.isEditingNote = true;
   }
 
-  private handleNoteCancel() {
+  private handleNoteCancel(e: Event) {
+    e.stopPropagation();
     this.isEditingNote = false;
     this.noteError = null; // Clear any previous save errors
   }
 
-  private async handleNoteSave() {
+  private async handleNoteSave(e: Event) {
+    e.stopPropagation();
     if (!this.riverId) return;
 
     const textarea = this.shadowRoot?.querySelector('.notes-section textarea') as HTMLTextAreaElement;
