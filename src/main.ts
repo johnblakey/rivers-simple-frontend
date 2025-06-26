@@ -96,17 +96,22 @@ function renderCharts() {
       continue;
     }
 
+    // Create a consistent, unique identifier for each river.
+    // Use the siteCode if it exists, otherwise use a prefixed database ID.
+    // This ensures that even rivers without a gauge can be favorited.
+    const riverIdentifier = detail.siteCode || `db-id-${detail.id}`;
+
     const chartWrapper = document.createElement('div');
     chartWrapper.className = 'chart-with-favorite-wrapper';
     chartWrapper.id = `wrapper-${slugify(detail.siteName)}`;
 
     const chartElement = new RiverLevelChart();
     chartElement.siteCode = detail.siteCode;
-    chartElement.riverId = detail.siteCode || `db-id-${detail.id}`; // Use siteCode if available, otherwise fallback to db id
+    chartElement.riverId = riverIdentifier;
     chartElement.riverDetail = detail;
 
     const favoriteButton = document.createElement('favorite-button') as FavoriteButton;
-    favoriteButton.siteCode = detail.siteCode;
+    favoriteButton.siteCode = riverIdentifier; // Pass the unique identifier
     favoriteButton.riverName = detail.siteName;
 
     chartWrapper.appendChild(favoriteButton);
@@ -179,8 +184,8 @@ async function sortChartWrappers(chartWrappers: HTMLElement[]): Promise<HTMLElem
 
     if (!aChart || !bChart) return 0;
 
-    const aIsFav = isSiteFavorite(aChart.siteCode);
-    const bIsFav = isSiteFavorite(bChart.siteCode);
+    const aIsFav = isSiteFavorite(aChart.riverId);
+    const bIsFav = isSiteFavorite(bChart.riverId);
 
     // Pinning logic: favorites always come before non-favorites
     if (aIsFav && !bIsFav) return -1;
