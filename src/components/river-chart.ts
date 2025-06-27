@@ -1,3 +1,4 @@
+// src/components/river-chart.ts
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Chart, registerables, type ChartConfiguration } from "chart.js/auto";

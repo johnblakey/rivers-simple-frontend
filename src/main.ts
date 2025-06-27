@@ -1,3 +1,4 @@
+// src/main.ts
 import { getRiverDetails } from './utility/data-service.ts';
 import type { RiverDetail } from './utility/data-service.ts';
 import { RiverLevelChart } from './components/river-chart.ts';
