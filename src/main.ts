@@ -1,7 +1,7 @@
 // src/main.ts
 import { getRiverDetails } from './utility/data-service.ts';
 import type { RiverDetail } from './utility/data-service.ts';
-import { RiverLevelChart } from './components/river-chart.ts';
+import { RiverLevelChart } from './components/river-chart/river-section.ts';
 import { slugify } from './utility/slugify-string.ts';
 import { FavoriteButton } from './components/favorite-button.ts';
 import './utility/auth-ui';
