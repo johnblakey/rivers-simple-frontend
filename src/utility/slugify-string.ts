@@ -1,4 +1,4 @@
-// src/utils/string-utils.ts
+// src/utility/slugify-string.ts
 export function slugify(text: string): string {
   return text
     .toLowerCase()

@@ -1,7 +1,8 @@
+// src/main.ts
 import { getRiverDetails } from './utility/data-service.ts';
 import type { RiverDetail } from './utility/data-service.ts';
 import { RiverLevelChart } from './components/river-chart.ts';
-import { slugify } from './utility/string-utils';
+import { slugify } from './utility/slugify-string.ts';
 import { FavoriteButton } from './components/favorite-button.ts';
 import './utility/auth-ui';
 import { authService } from './utility/auth-service';
@@ -9,17 +10,21 @@ import { userPreferencesService } from './utility/user-preferences-service';
 
 console.info("Welcome to the rivers.johnblakey.org. Email me at johnblakeyorg@gmail.com if you find any bugs, security issues, or have feedback. Blunt tone welcome.");
 
-let currentSortOrder: 'runnable' | 'alphabetical' = 'runnable';
 let allRiverDetails: RiverDetail[] = [];
 let chartsContainer: HTMLDivElement | null = null;
-let sortToggleContainer: HTMLElement | null = null;
-let runnableSortOption: HTMLElement | null = null;
-let alphabeticalSortOption: HTMLElement | null = null;
 
 // Enhanced lazy loading state tracking
-let isInitialSortComplete = false;
 let pendingResortTimeout: number | null = null;
-let chartsLoadedCount = 0;
+let hasInitialSortBeenApplied = false; // New flag to ensure hash scroll only happens once
+let isInitialAuthCheckComplete = false;
+
+// Promise to resolve when the initial auth state is confirmed.
+// This is crucial to prevent sorting before we know if the user is logged in,
+// which would cause a race condition with the hash-based scrolling.
+let resolveInitialAuth: () => void;
+const initialAuthPromise = new Promise<void>(resolve => {
+  resolveInitialAuth = resolve;
+});
 
 async function initializeApp() {
   const appHost = document.getElementById('charts-host');
@@ -28,6 +33,18 @@ async function initializeApp() {
     document.body.textContent = 'Error: Application host element not found';
     return;
   }
+
+  // Listen for auth state changes immediately.
+  // The first time this fires, it resolves the promise to signal that
+  // the initial user state is known. Subsequent fires will trigger a resort.
+  authService.onAuthStateChanged(() => {
+    if (!isInitialAuthCheckComplete) {
+      isInitialAuthCheckComplete = true;
+      resolveInitialAuth();
+    } else {
+      scheduleResort('auth-change');
+    }
+  });
 
   // Setup Auth UI in the header
   const headerAuthContainer = document.getElementById('auth-container');
@@ -39,12 +56,6 @@ async function initializeApp() {
     console.warn('#auth-container element not found in the header.');
   }
 
-  // Setup sort toggle
-  sortToggleContainer = document.getElementById('sort-toggle');
-  if (sortToggleContainer) {
-    setupSortToggle();
-  }
-
   // Create charts container
   appHost.innerHTML = '';
   chartsContainer = document.createElement('div');
@@ -52,8 +63,7 @@ async function initializeApp() {
 
   try {
     // Listen for favorite changes and chart load completions
-    chartsContainer.addEventListener('favorite-changed', handleFavoriteChange);
-    chartsContainer.addEventListener('chart-loaded', handleChartLoaded);
+    chartsContainer.addEventListener('favorite-changed', handleFavoriteChange); // Keep favorite change listener
 
     // Fetch and render charts initially
     allRiverDetails = await getRiverDetails();
@@ -61,90 +71,36 @@ async function initializeApp() {
       chartsContainer.textContent = 'No river details found.';
       return;
     }
-    renderCharts(allRiverDetails);
+    renderCharts(); // Render all charts with initial (unsorted) data
+
+    // Wait for the initial authentication check to complete before sorting.
+    // This ensures that if a user is signed in, we have their favorites
+    // before we attempt to sort and scroll to a hashed URL.
+    await initialAuthPromise;
+
+    applySorting(true); // Now apply the definitive initial sort and handle hash scroll
   } catch (error) {
     console.error("Failed to initialize:", error);
     chartsContainer.textContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
   }
-
-  // Listen for auth state changes
-  authService.onAuthStateChanged((_user) => {
-    updateSortToggleVisuals();
-    scheduleResort('auth-change');
-  });
 }
 
-function setupSortToggle() {
-  if (!sortToggleContainer) return;
-
-  sortToggleContainer.innerHTML = '';
-  sortToggleContainer.style.display = 'inline-flex';
-  sortToggleContainer.style.border = '1px solid #ccc';
-  sortToggleContainer.style.borderRadius = '4px';
-  sortToggleContainer.style.overflow = 'hidden';
-  if (sortToggleContainer instanceof HTMLButtonElement) {
-    sortToggleContainer.style.padding = '0';
-  }
-
-  runnableSortOption = document.createElement('span');
-  runnableSortOption.textContent = 'Runnable';
-  runnableSortOption.dataset.sortValue = 'runnable';
-
-  alphabeticalSortOption = document.createElement('span');
-  alphabeticalSortOption.textContent = 'Alphabetical';
-  alphabeticalSortOption.dataset.sortValue = 'alphabetical';
-
-  [runnableSortOption, alphabeticalSortOption].forEach(option => {
-    option.style.padding = '8px 12px';
-    option.style.cursor = 'pointer';
-    option.style.userSelect = 'none';
-    option.addEventListener('click', () => {
-      const newSortOrder = option.dataset.sortValue as 'runnable' | 'alphabetical';
-      if (currentSortOrder !== newSortOrder) {
-        currentSortOrder = newSortOrder;
-        updateSortToggleVisuals();
-        history.replaceState(null, "", window.location.pathname);
-        scheduleResort('sort-change');
-      }
-    });
-    sortToggleContainer!.appendChild(option);
-  });
-
-  updateSortToggleVisuals();
-}
-
-function updateSortToggleVisuals() {
-  if (!runnableSortOption || !alphabeticalSortOption) return;
-
-  const activeStyle = { backgroundColor: '#007bff', color: 'white' };
-  const inactiveStyle = { backgroundColor: '#f0f0f0', color: 'black' };
-
-  Object.assign(runnableSortOption.style, currentSortOrder === 'runnable' ? activeStyle : inactiveStyle);
-  Object.assign(alphabeticalSortOption.style, currentSortOrder === 'alphabetical' ? activeStyle : inactiveStyle);
-
-  [runnableSortOption, alphabeticalSortOption].forEach(option => {
-    if (option.style.backgroundColor === inactiveStyle.backgroundColor) {
-      option.onmouseover = () => option.style.backgroundColor = '#e0e0e0';
-      option.onmouseout = () => option.style.backgroundColor = inactiveStyle.backgroundColor;
-    } else {
-      option.onmouseover = null;
-      option.onmouseout = null;
-    }
-  });
-}
-
-function renderCharts(_riverDetails: RiverDetail[]) {
+function renderCharts() {
   if (!chartsContainer) return;
 
   chartsContainer.innerHTML = '';
-  chartsLoadedCount = 0;
-  isInitialSortComplete = false;
 
   for (const detail of allRiverDetails) {
+    // A siteName is the minimum required property to render a chart card.
     if (!detail.siteName?.trim()) {
       console.warn(`Skipping river with missing siteName:`, detail);
       continue;
     }
+
+    // Create a consistent, unique identifier for each river.
+    // Use the siteCode if it exists, otherwise use a prefixed database ID.
+    // This ensures that even rivers without a gauge can be favorited.
+    const riverIdentifier = detail.siteCode || `db-id-${detail.id}`;
 
     const chartWrapper = document.createElement('div');
     chartWrapper.className = 'chart-with-favorite-wrapper';
@@ -152,53 +108,32 @@ function renderCharts(_riverDetails: RiverDetail[]) {
 
     const chartElement = new RiverLevelChart();
     chartElement.siteCode = detail.siteCode;
+    chartElement.riverId = riverIdentifier;
     chartElement.riverDetail = detail;
 
     const favoriteButton = document.createElement('favorite-button') as FavoriteButton;
-    favoriteButton.siteCode = detail.siteCode;
+    favoriteButton.siteCode = riverIdentifier; // Pass the unique identifier
     favoriteButton.riverName = detail.siteName;
 
     chartWrapper.appendChild(favoriteButton);
     chartWrapper.appendChild(chartElement);
     chartsContainer.appendChild(chartWrapper);
   }
-
-  // Initial sort with alphabetical ordering (since data isn't loaded yet)
-  scheduleResort('initial', 0);
 }
 
 /**
  * Schedules a resort operation with debouncing to prevent excessive resorting
  */
-function scheduleResort(reason: string, delay: number = 300) {
+function scheduleResort(reason: string, delay: number = 300) { // Debouncing is still useful for rapid favorite changes
   if (pendingResortTimeout !== null) {
     clearTimeout(pendingResortTimeout);
   }
 
   pendingResortTimeout = setTimeout(() => {
-    console.log(`Resorting charts (reason: ${reason}, loaded: ${chartsLoadedCount}/${allRiverDetails.length})`);
-    applySorting();
+    console.log(`Resorting charts (reason: ${reason})`);
+    applySorting(false); // Not an initial sort
     pendingResortTimeout = null;
   }, delay);
-}
-
-/**
- * Handles individual chart load completion events
- */
-function handleChartLoaded() {
-  chartsLoadedCount++;
-
-  // Only trigger resorts after initial load if we're in runnable sort mode
-  // and we haven't completed the initial sort yet
-  if (currentSortOrder === 'runnable') {
-    scheduleResort('chart-loaded');
-  }
-
-  // Mark initial sort as complete once all charts are loaded
-  if (chartsLoadedCount >= allRiverDetails.length && !isInitialSortComplete) {
-    isInitialSortComplete = true;
-    console.log('All charts loaded, initial sorting complete');
-  }
 }
 
 /**
@@ -208,7 +143,7 @@ function handleFavoriteChange() {
   scheduleResort('favorite-change');
 }
 
-async function applySorting(): Promise<void> {
+async function applySorting(isInitial: boolean = false): Promise<void> {
   if (!chartsContainer) return;
 
   const chartWrappers = Array.from(chartsContainer.children) as HTMLElement[];
@@ -225,7 +160,10 @@ async function applySorting(): Promise<void> {
     rebuildCharts(sortedWrappers);
   }
 
-  handleHashScroll();
+  if (isInitial && !hasInitialSortBeenApplied) {
+    handleHashScroll();
+    hasInitialSortBeenApplied = true;
+  }
 }
 
 async function sortChartWrappers(chartWrappers: HTMLElement[]): Promise<HTMLElement[]> {
@@ -247,27 +185,16 @@ async function sortChartWrappers(chartWrappers: HTMLElement[]): Promise<HTMLElem
 
     if (!aChart || !bChart) return 0;
 
-    const aIsFav = isSiteFavorite(aChart.siteCode);
-    const bIsFav = isSiteFavorite(bChart.siteCode);
+    const aIsFav = isSiteFavorite(aChart.riverId);
+    const bIsFav = isSiteFavorite(bChart.riverId);
 
     // Pinning logic: favorites always come before non-favorites
     if (aIsFav && !bIsFav) return -1;
     if (!aIsFav && bIsFav) return 1;
 
-    // If both are favorites or both are non-favorites, apply current sort order
-    if (currentSortOrder === 'alphabetical') {
-      return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
-    } else if (currentSortOrder === 'runnable') {
-      // For runnable sort, use the chart's sort key if available
-      // Fall back to alphabetical if sort keys are the same or unavailable
-      const aKey = aChart.sortKeyRunnable;
-      const bKey = bChart.sortKeyRunnable;
-
-      const statusDiff = aKey - bKey;
-      if (statusDiff !== 0) return statusDiff;
-      return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
-    }
-    return 0;
+    // If both are favorites or both are non-favorites, sort alphabetically
+    // This is the only secondary sort now
+    return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
   });
 }
 

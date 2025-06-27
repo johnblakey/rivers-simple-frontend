@@ -7,6 +7,15 @@ export interface UserPreferences {
   userEmail: string;
 }
 
+export interface UserNote {
+  note: string;
+  riverId: string;
+  userId?: string;
+  userEmail?: string;
+  createdAt?: string; // ISO Date string
+  updatedAt?: string; // ISO Date string
+}
+
 class UserPreferencesService {
   private baseUrl: string;
 
@@ -107,6 +116,78 @@ Ensure the VITE_API_BASE_URL environment variable is set and accessible to the V
     } catch (error) {
       console.error('Error checking if river is favorite:', error);
       return false;
+    }
+  }
+
+  async getUserNote(riverId: string): Promise<UserNote | null> {
+    try {
+      const response = await this.makeAuthenticatedRequest(`${this.baseUrl}/user/notes/${riverId}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user note: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      // Don't re-throw auth errors, just return null.
+      if (error instanceof Error && error.message.includes('authenticated')) {
+        return null;
+      }
+      console.error(`Error fetching user note for river ${riverId}:`, error);
+      throw error; // Re-throw other errors
+    }
+  }
+
+  async saveUserNote(riverId: string, note: string): Promise<void> {
+    try {
+      const response = await this.makeAuthenticatedRequest(
+        `${this.baseUrl}/user/notes/${riverId}`,
+        {
+          method: 'POST', // Backend handles POST as an upsert
+          body: JSON.stringify({ note })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to save user note: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error(`Error saving user note for river ${riverId}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteUserNote(riverId: string): Promise<void> {
+    try {
+      const response = await this.makeAuthenticatedRequest(
+        `${this.baseUrl}/user/notes/${riverId}`,
+        {
+          method: 'DELETE'
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete user note: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error(`Error deleting user note for river ${riverId}:`, error);
+      throw error;
+    }
+  }
+
+  async getAllUserNotes(): Promise<UserNote[]> {
+    try {
+      const response = await this.makeAuthenticatedRequest(`${this.baseUrl}/user/notes`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch all user notes: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      // Don't re-throw auth errors, just return empty array.
+      if (error instanceof Error && error.message.includes('authenticated')) {
+        return [];
+      }
+      console.error('Error fetching all user notes:', error);
+      throw error;
     }
   }
 }
