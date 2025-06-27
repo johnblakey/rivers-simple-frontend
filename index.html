@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!doctype html>
 <html lang="en">
   <head>
@@ -35,7 +36,6 @@
           <a href="/about.html">About</a>
         </div>
         <div id="auth-container"></div>
-        <!-- Placeholder for Sign In button -->
       </nav>
     </header>
     <main>
@@ -48,15 +48,34 @@
         id="sort-controls"
         style="
           margin-bottom: 16px;
-          margin-top: 16px; /* Added to give space from the title container */
+          margin-top: 16px;
           display: flex;
           align-items: center;
           gap: 8px;
         ">
-        <!-- The label is now part of the button text, managed by JavaScript -->
-        <!-- Sort toggle removed as per new requirements -->
       </div>
-      <div id="charts-host"></div>
+
+      <!-- Rivers Table -->
+      <div id="rivers-table-container">
+        <table id="rivers-table" class="rivers-table">
+          <thead>
+            <tr>
+              <th>River Name</th>
+              <th>Current Level</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="rivers-table-body">
+            <!-- Table rows will be populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Container for expanded river sections -->
+      <div id="expanded-sections"></div>
+
+      <!-- Original charts host (hidden by default) -->
+      <div id="charts-host" style="display: none;"></div>
     </main>
     <div id="footer-placeholder"></div>
 
