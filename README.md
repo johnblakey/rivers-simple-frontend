@@ -126,7 +126,7 @@ Increment version tag found in link below (e.g. TAG_NAME=1 -> 2) in command belo
 <https://console.cloud.google.com/artifacts/docker/river-level-0/us-west1/rivers-frontend/rivers-lit?inv=1&invt=Abz1yw&project=river-level-0>
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=36
+gcloud builds submit --config cloudbuild.yaml . --region=us-west2 --substitutions=SHORT_SHA=latest,TAG_NAME=38
 ```
 
 See builds and logging at <https://console.cloud.google.com/cloud-build/builds?referrer=search&inv=1&invt=AbzdQA&walkthrough_id=iam--create-service-account&project=river-level-0>
@@ -361,26 +361,28 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Change ft3/s to cubic feet per second CFS~~
 - ~~Use Apple style toggle for sorting vs button~~
 - ~~Fix chart label overlap on mobile~~
-- Make the condensed table view
-- Make modified expanded view
-- Make ability to add alerts options
-- Add private notes
+- ~~Make the condensed table view~~
+- ~~Make modified expanded view~~
+- Make email alerts option
+- ~~Add private notes~~
 - Allow manually setting timezone (default is use the client to set it)
-- Allow rearranging (arrows? drag them?) favorite charts pinned to top and save the new arrangement
+- Allow rearranging (arrows? drag them?)
+- ~~Favorite charts pinned to top and save the new arrangement~~
 - Reduce roles on Service accounts by replacing with user created simplified service account <https://console.cloud.google.com/iam-admin/iam?inv=1&invt=AbzeuQ&project=river-level-0> and <https://console.cloud.google.com/iam-admin/serviceaccounts?inv=1&invt=AbzeuQ&project=river-level-0> theres an auto-generated account
 - Can I lock down APIs more?
 - I need to verify how to run local and test vs deploy to Cloud Run and test
+- Allow user to save type of sort chosen (alphabetical vs current) - backend change needed
+- Simplify injecting Firebase credentials (secret manager still injects directly into Dockerfile - is readable by users directly)
 
 ### Long-term TODO
 
-- Allow user to save type of sort chosen (alphabetical vs current) - backend change needed
 - Add a form for users to submit river links
 - Create tailwind css
-- Change river-level file names or river-levels file names to rivers project
+- ~~Change river-level file names or river-levels file names to rivers project~~
 - Simplify slug code
 - Simplify Lit Component
 - Simplify User Authentication
-- Simplify data.ts pulling data (rename?)
+- ~~Simplify data.ts pulling data (rename?)~~
 - Refactor utility files naming and scope
 - Use security recommendations here <https://owasp.org/www-project-top-ten/> to this project and add to mega-reference
 

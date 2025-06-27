@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Rivers - River levels and information" />
+    <meta name="description" content="River level updates" />
     <title>Rivers Project</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="/styles/style.css" />
@@ -77,23 +77,6 @@
       <div id="charts-host" style="display: none;"></div>
     </main>
     <div id="footer-placeholder"></div>
-
-    <script>
-      // This object will be populated by the entrypoint.sh script in Docker
-      // with values from environment variables (sourced from Google Cloud Secret Manager).
-      // For local development, these will be undefined unless you manually set them
-      // or your dev server has a similar injection mechanism.
-      // Fallbacks to Vite's import.meta.env (VITE_ prefixed) are handled in the respective .ts files.
-      window.runtimeConfig = {
-        FIREBASE_API_KEY: "__FIREBASE_API_KEY__",
-        FIREBASE_AUTH_DOMAIN: "__FIREBASE_AUTH_DOMAIN__",
-        FIREBASE_PROJECT_ID: "__FIREBASE_PROJECT_ID__",
-        FIREBASE_STORAGE_BUCKET: "__FIREBASE_STORAGE_BUCKET__",
-        FIREBASE_MESSAGING_SENDER_ID: "__FIREBASE_MESSAGING_SENDER_ID__",
-        FIREBASE_APP_ID: "__FIREBASE_APP_ID__",
-        API_BASE_URL: "__API_BASE_URL__",
-      };
-    </script>
     <script type="module" src="/src/main.ts"></script>
     <script>
       fetch("/footer.html")
