@@ -4,7 +4,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { Chart, registerables, type ChartConfiguration } from "chart.js/auto";
 import AnnotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotation";
 import "chartjs-adapter-date-fns";
-import { getRiverLevelsBySiteCode, type RiverLevel, type RiverDetail } from "../../utility/data-service";
+import { getRiverLevelsBySiteCode, type RiverLevel, type RiverDetail } from "../../utility/river-service";
 import { CHART_COLORS } from "../../utility/chart-colors";
 
 Chart.register(...registerables, AnnotationPlugin);

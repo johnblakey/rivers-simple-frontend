@@ -2,7 +2,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { type RiverDetail } from "../../utility/data-service";
+import { type RiverDetail } from "../../utility/river-service";
 
 const linkify = (text: string) => text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 

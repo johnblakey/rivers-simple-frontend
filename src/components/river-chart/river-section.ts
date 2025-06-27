@@ -1,14 +1,14 @@
 // src/components/river-chart/river-section.ts
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { type RiverDetail } from "../../utility/data-service";
+import { type RiverDetail } from "../../utility/river-service";
 import { slugify } from "../../utility/slugify-string";
 import "./river-chart-canvas";
 import "./river-details";
 import "./river-notes";
 
-@customElement("river-level-chart")
-export class RiverLevelChart extends LitElement {
+@customElement("river-section") // Renamed custom element tag
+export class RiverSection extends LitElement { // Renamed class
   @property({ type: String }) siteCode = "";
   @property({ type: String }) riverId = "";
   @property({ type: Object }) riverDetail: RiverDetail | null = null;
