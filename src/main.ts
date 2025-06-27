@@ -11,12 +11,10 @@ import { userPreferencesService } from './utility/user-preferences-service';
 console.info("Welcome to the rivers.johnblakey.org. Email me at johnblakeyorg@gmail.com if you find any bugs, security issues, or have feedback. Blunt tone welcome.");
 
 let allRiverDetails: RiverDetail[] = [];
-let riverLevelsCache = new Map<string, RiverLevel[]>();
-let expandedSections = new Set<string>();
+const riverLevelsCache = new Map<string, RiverLevel[]>();
+const expandedSections = new Set<string>();
 
 // Enhanced lazy loading state tracking
-let pendingResortTimeout: number | null = null;
-let hasInitialSortBeenApplied = false;
 let isInitialAuthCheckComplete = false;
 
 // Promise to resolve when the initial auth state is confirmed
@@ -154,20 +152,23 @@ async function renderRiversTable() {
 
 function toggleRiverSection(riverDetail: RiverDetail) {
   const riverId = riverDetail.siteCode || `db-id-${riverDetail.id}`;
+  const slug = slugify(riverDetail.siteName);
   const expandedContainer = document.getElementById('expanded-sections');
   if (!expandedContainer) return;
 
-  const existingSection = document.getElementById(`expanded-${riverId}`);
+  const sectionId = `expanded-${slug}`;
+  const existingSection = document.getElementById(sectionId);
 
   if (existingSection) {
-    // Section is already expanded, leave it open (as requested)
+    // Section is already expanded, scroll to it and update hash
     existingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.location.hash = slug;
     return;
   }
 
   // Create new expanded section
   const sectionWrapper = document.createElement('div');
-  sectionWrapper.id = `expanded-${riverId}`;
+  sectionWrapper.id = sectionId;
   sectionWrapper.className = 'expanded-river-section';
 
   // Add close button
@@ -179,6 +180,10 @@ function toggleRiverSection(riverDetail: RiverDetail) {
     e.stopPropagation();
     sectionWrapper.remove();
     expandedSections.delete(riverId);
+    if (window.location.hash === `#${slug}`) {
+      // Removes the hash from the URL without reloading
+      history.pushState("", document.title, window.location.pathname + window.location.search);
+    }
   });
 
   // Create river section component
@@ -204,7 +209,8 @@ function toggleRiverSection(riverDetail: RiverDetail) {
   expandedContainer.appendChild(sectionWrapper);
   expandedSections.add(riverId);
 
-  // Scroll to the new section
+  // Set hash and scroll to the new section
+  window.location.hash = slug;
   setTimeout(() => {
     sectionWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 100);
@@ -260,6 +266,15 @@ async function initializeApp() {
 
     // Render the table
     await renderRiversTable();
+
+    // Check for a river slug in the URL hash and open its section
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+      const riverDetail = allRiverDetails.find(detail => slugify(detail.siteName) === hash);
+      if (riverDetail) {
+        toggleRiverSection(riverDetail);
+      }
+    }
 
   } catch (error) {
     console.error("Failed to initialize:", error);
