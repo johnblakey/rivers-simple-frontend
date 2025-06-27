@@ -131,19 +131,35 @@ async function renderRiversTable() {
       row.classList.add('favorite-river');
     }
 
-    const levelText = data.currentLevel !== null ? `${data.currentLevel.toFixed(1)} CFS` : 'No Data';
-    const statusText = data.status === 'no-data' ? 'No Data' :
-                      data.status === 'low' ? 'Low' :
-                      data.status === 'high' ? 'High' : 'Good';
+    // --- Create Cells ---
 
-    row.innerHTML = `
-      <td class="river-name">${data.detail.siteName}</td>
-      <td class="river-level">${levelText}</td>
-      <td class="river-status">
-        <span class="status-indicator" style="background-color: ${data.statusColor}"></span>
-        ${statusText}
-      </td>
-    `;
+    // Favorite Cell
+    const favoriteCell = document.createElement('td');
+    favoriteCell.className = 'favorite-cell';
+    const favoriteButton = document.createElement('favorite-button') as FavoriteButton;
+    favoriteButton.siteCode = riverId;
+    favoriteButton.riverName = data.detail.siteName;
+    favoriteCell.appendChild(favoriteButton);
+    // Prevent the row's click event from firing when the favorite button is clicked
+    favoriteCell.addEventListener('click', (e) => e.stopPropagation());
+    row.appendChild(favoriteCell);
+
+    // River Name, Level, and Status Cells
+    const nameCell = document.createElement('td');
+    nameCell.className = 'river-name';
+    nameCell.textContent = data.detail.siteName;
+    row.appendChild(nameCell);
+
+    const levelCell = document.createElement('td');
+    levelCell.className = 'river-level';
+    levelCell.textContent = data.currentLevel !== null ? `${data.currentLevel.toFixed(1)} CFS` : 'No Data';
+    row.appendChild(levelCell);
+
+    const statusCell = document.createElement('td');
+    statusCell.className = 'river-status';
+    const statusText = data.status === 'no-data' ? 'No Data' : data.status.charAt(0).toUpperCase() + data.status.slice(1);
+    statusCell.innerHTML = `<span class="status-indicator" style="background-color: ${data.statusColor}"></span> ${statusText}`;
+    row.appendChild(statusCell);
 
     row.addEventListener('click', () => toggleRiverSection(data.detail, row));
     tableBody.appendChild(row);
@@ -190,13 +206,8 @@ function toggleRiverSection(riverDetail: RiverDetail, clickedRow: HTMLTableRowEl
   riverSection.riverId = riverId;
   riverSection.riverDetail = riverDetail;
 
-  const favoriteButton = document.createElement('favorite-button') as FavoriteButton;
-  favoriteButton.siteCode = riverId;
-  favoriteButton.riverName = riverDetail.siteName;
-
   const headerDiv = document.createElement('div');
   headerDiv.className = 'expanded-section-header';
-  headerDiv.appendChild(favoriteButton);
   headerDiv.appendChild(closeButton);
 
   sectionWrapper.appendChild(headerDiv);
@@ -206,7 +217,7 @@ function toggleRiverSection(riverDetail: RiverDetail, clickedRow: HTMLTableRowEl
   const expandedRow = document.createElement('tr');
   expandedRow.className = 'expanded-detail-row';
   const expandedCell = document.createElement('td');
-  expandedCell.colSpan = 3; // Span all columns
+  expandedCell.colSpan = 4; // Span all columns
   expandedCell.appendChild(sectionWrapper);
   expandedRow.appendChild(expandedCell);
 

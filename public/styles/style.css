@@ -105,6 +105,15 @@ h2 {
 .rivers-table td {
   padding: 10px 16px;
   font-size: 0.95em;
+  vertical-align: middle;
+}
+
+.rivers-table th:first-child,
+.rivers-table td.favorite-cell {
+  width: 40px;
+  padding: 0 8px;
+  text-align: center;
+  cursor: default; /* The cell itself isn't clickable */
 }
 
 .river-name {
@@ -145,7 +154,7 @@ h2 {
 
 .rivers-table tbody tr.expanded-detail-row td {
   padding: 0;
-  border-bottom: 2px solid #34495e;
+  border-bottom: 2px solid #34495e; /* Matches the open row's bottom border */
 }
 
 /* Expanded River Sections */
@@ -160,7 +169,7 @@ h2 {
 
 .expanded-section-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end; /* Push close button to the right */
   align-items: center;
   padding: 8px 16px;
   background-color: #f8f9fa;
