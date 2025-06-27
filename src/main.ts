@@ -160,8 +160,25 @@ async function renderRiversTable() {
 
     const statusCell = document.createElement('td');
     statusCell.className = 'river-status';
+
+    // Wrapper for status indicator and text to keep them grouped
+    const statusContent = document.createElement('span');
+    statusContent.className = 'status-content';
     const statusText = data.status === 'no-data' ? 'No Gauge' : data.status.charAt(0).toUpperCase() + data.status.slice(1);
-    statusCell.innerHTML = `<span class="status-indicator" style="background-color: ${data.statusColor}"></span> ${statusText}`;
+    statusContent.innerHTML = `<span class="status-indicator" style="background-color: ${data.statusColor}"></span> ${statusText}`;
+    statusCell.appendChild(statusContent);
+
+    // Close button (X) - initially hidden, appears on the far right of the cell
+    const closeButton = document.createElement('span');
+    closeButton.className = 'close-row-btn';
+    closeButton.innerHTML = '&times;'; // Use &times; for a nice X
+    closeButton.style.display = 'none'; // Hide it initially
+    closeButton.title = 'Close section';
+    closeButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent row click from firing
+        toggleRiverSection(data.detail, row);
+    });
+    statusCell.appendChild(closeButton);
     row.appendChild(statusCell);
 
     row.addEventListener('click', () => toggleRiverSection(data.detail, row));
@@ -175,10 +192,19 @@ function toggleRiverSection(riverDetail: RiverDetail, clickedRow: HTMLTableRowEl
   const sectionId = `expanded-${slug}`;
   const existingSection = document.getElementById(sectionId);
 
+  // Get the close button from the clicked row to toggle its visibility
+  const closeBtnInRow = clickedRow.querySelector('.close-row-btn') as HTMLElement | null;
+
   if (existingSection) {
     // Section is already open, so close it by removing its parent <tr>
     existingSection.closest('tr')?.remove();
     expandedSections.delete(riverId);
+
+    // Hide the close button in the row
+    if (closeBtnInRow) {
+      closeBtnInRow.style.display = 'none';
+    }
+
     if (window.location.hash === `#${slug}`) {
       history.pushState("", document.title, window.location.pathname + window.location.search);
     }
@@ -190,30 +216,13 @@ function toggleRiverSection(riverDetail: RiverDetail, clickedRow: HTMLTableRowEl
   sectionWrapper.id = sectionId;
   sectionWrapper.className = 'expanded-river-section';
 
-  const closeButton = document.createElement('button');
-  closeButton.className = 'close-section-btn';
-  closeButton.innerHTML = '×';
-  closeButton.title = 'Close section';
-  closeButton.addEventListener('click', (e) => {
-    e.stopPropagation();
-    sectionWrapper.closest('tr')?.remove();
-    expandedSections.delete(riverId);
-    if (window.location.hash === `#${slug}`) {
-      // Removes the hash from the URL without reloading
-      history.pushState("", document.title, window.location.pathname + window.location.search);
-    }
-  });
-
   const riverSection = new RiverSection();
   riverSection.siteCode = riverDetail.siteCode;
   riverSection.riverId = riverId;
   riverSection.riverDetail = riverDetail;
 
-  const headerDiv = document.createElement('div');
-  headerDiv.className = 'expanded-section-header';
-  headerDiv.appendChild(closeButton);
-
-  sectionWrapper.appendChild(headerDiv);
+  // The header with the close button is removed.
+  // The close button is now part of the main table row and is toggled.
   sectionWrapper.appendChild(riverSection);
 
   // Create a new table row and cell to host the section
@@ -227,6 +236,11 @@ function toggleRiverSection(riverDetail: RiverDetail, clickedRow: HTMLTableRowEl
   // Insert the new row after the clicked row
   clickedRow.after(expandedRow);
   expandedSections.add(riverId);
+
+  // Show the close button in the row
+  if (closeBtnInRow) {
+    closeBtnInRow.style.display = 'block';
+  }
 
   window.location.hash = slug;
   setTimeout(() => {
