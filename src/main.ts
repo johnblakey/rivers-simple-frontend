@@ -155,12 +155,12 @@ async function renderRiversTable() {
 
     const levelCell = document.createElement('td');
     levelCell.className = 'river-level';
-    levelCell.textContent = data.currentLevel !== null ? `${data.currentLevel.toFixed(0)} CFS` : 'No Data';
+    levelCell.textContent = data.currentLevel !== null ? `${data.currentLevel.toFixed(0)} CFS` : '';
     row.appendChild(levelCell);
 
     const statusCell = document.createElement('td');
     statusCell.className = 'river-status';
-    const statusText = data.status === 'no-data' ? 'No Data' : data.status.charAt(0).toUpperCase() + data.status.slice(1);
+    const statusText = data.status === 'no-data' ? 'No Gauge' : data.status.charAt(0).toUpperCase() + data.status.slice(1);
     statusCell.innerHTML = `<span class="status-indicator" style="background-color: ${data.statusColor}"></span> ${statusText}`;
     row.appendChild(statusCell);
 
