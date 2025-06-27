@@ -5,12 +5,32 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Run and Debug Frontend",
       "type": "chrome",
       "request": "launch",
-      "name": "Debug in Chrome",
+      "url": "http://localhost:5173/",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "npm: build:full:dev"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug Running Localhost in Chrome",
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}",
       "sourceMaps": true
+    },
+    {
+        "type": "node",
+        "request": "launch",
+        "name": "Depredcated - Debug with envs in Node",
+        "program": "${workspaceFolder}/index.js",
+        "env": {
+            "PROJECT_ID": "river-level-0",
+            "WATER_LEVEL_KIND": "riverTimeSeriesData",
+            "RIVER_DETAILS_KIND": "riverDetails",
+            "DATASTORE_NAMESPACE": "firestore"
+        }
     }
   ]
 }

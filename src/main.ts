@@ -1,10 +1,10 @@
 // src/main.ts
-import { getRiverDetails } from './utility/data-service.ts';
-import type { RiverDetail } from './utility/data-service.ts';
-import { RiverLevelChart } from './components/river-chart.ts';
+import { getRiverDetails } from './utility/river-service.ts';
+import type { RiverDetail } from './utility/river-service.ts'; // Keep this import
+import { RiverSection } from './components/river-chart/river-section.ts'; // Renamed import
 import { slugify } from './utility/slugify-string.ts';
 import { FavoriteButton } from './components/favorite-button.ts';
-import './utility/auth-ui';
+import { AuthUI } from './utility/auth-ui'; // Named import for AuthUI class
 import { authService } from './utility/auth-service';
 import { userPreferencesService } from './utility/user-preferences-service';
 
@@ -49,7 +49,7 @@ async function initializeApp() {
   // Setup Auth UI in the header
   const headerAuthContainer = document.getElementById('auth-container');
   if (headerAuthContainer) {
-    const authUI = document.createElement('auth-ui');
+    const authUI = new AuthUI(); // Instantiate directly using the imported class
     headerAuthContainer.innerHTML = '';
     headerAuthContainer.appendChild(authUI);
   } else {
@@ -106,10 +106,10 @@ function renderCharts() {
     chartWrapper.className = 'chart-with-favorite-wrapper';
     chartWrapper.id = `wrapper-${slugify(detail.siteName)}`;
 
-    const chartElement = new RiverLevelChart();
-    chartElement.siteCode = detail.siteCode;
-    chartElement.riverId = riverIdentifier;
-    chartElement.riverDetail = detail;
+    const chartElement = new RiverSection(); // Instantiate the new component name
+    chartElement.siteCode = detail.siteCode; // These properties are still valid
+    chartElement.riverId = riverIdentifier; // These properties are still valid
+    chartElement.riverDetail = detail; // These properties are still valid
 
     const favoriteButton = document.createElement('favorite-button') as FavoriteButton;
     favoriteButton.siteCode = riverIdentifier; // Pass the unique identifier
@@ -180,8 +180,8 @@ async function sortChartWrappers(chartWrappers: HTMLElement[]): Promise<HTMLElem
   const isSiteFavorite = (siteCode: string) => favoriteSiteCodes.includes(siteCode);
 
   return [...chartWrappers].sort((aWrapper, bWrapper) => {
-    const aChart = aWrapper.querySelector('river-level-chart') as RiverLevelChart;
-    const bChart = bWrapper.querySelector('river-level-chart') as RiverLevelChart;
+    const aChart = aWrapper.querySelector('river-section') as RiverSection; // Update query selector and type
+    const bChart = bWrapper.querySelector('river-section') as RiverSection; // Update query selector and type
 
     if (!aChart || !bChart) return 0;
 
@@ -201,7 +201,7 @@ async function sortChartWrappers(chartWrappers: HTMLElement[]): Promise<HTMLElem
 function rebuildCharts(chartWrappers: HTMLElement[]): void {
   setTimeout(() => {
     chartWrappers.forEach(wrapper => {
-      const chart = wrapper.querySelector('river-level-chart') as RiverLevelChart;
+      const chart = wrapper.querySelector('river-section') as RiverSection; // Update query selector and type
       chart?.rebuildChart();
     });
   }, 50);
@@ -213,7 +213,7 @@ function handleHashScroll() {
 
   const chartWrappers = Array.from(chartsContainer.children) as HTMLElement[];
   const targetWrapper = chartWrappers.find(wrapper => {
-    const chart = wrapper.querySelector('river-level-chart') as RiverLevelChart;
+    const chart = wrapper.querySelector('river-section') as RiverSection; // Update query selector and type
     return chart && slugify(chart.displayName) === hash;
   });
 

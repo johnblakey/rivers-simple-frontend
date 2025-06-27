@@ -1,10 +1,10 @@
-import './utility/auth-ui'; // Import the auth UI component
+import { AuthUI } from './utility/auth-ui'; // Named import for AuthUI class
 
 // Setup Auth UI in the header for the About page
 document.addEventListener('DOMContentLoaded', () => {
   const headerAuthContainer = document.getElementById('auth-container');
   if (headerAuthContainer) {
-    const authUI = document.createElement('auth-ui');
+    const authUI = new AuthUI(); // Instantiate directly using the imported class
     headerAuthContainer.innerHTML = ''; // Clear any placeholder
     headerAuthContainer.appendChild(authUI);
   } else {
