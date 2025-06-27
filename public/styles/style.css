@@ -1,3 +1,4 @@
+/* public/styles/style.css */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   margin: 0;
@@ -52,6 +53,155 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 16px; /* Less space between river chart components */
+}
+
+/* Rivers Table Styles */
+#rivers-table-container {
+  margin-bottom: 20px;
+}
+
+.rivers-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rivers-table thead {
+  background-color: #34495e;
+  color: #fff;
+}
+
+.rivers-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rivers-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.rivers-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.rivers-table tbody tr.favorite-river {
+  /* background-color is now handled by status classes, e.g. status-high */
+  border-left: 4px solid #ffc107;
+}
+
+.rivers-table tbody tr.favorite-river:hover {
+  /* hover background-color is now handled by status classes */
+}
+
+/* Status-based background colors. These will override the generic tr:hover */
+.rivers-table tbody tr.status-good { background-color: #d4edda; }
+.rivers-table tbody tr.status-good:hover { background-color: #c3e6cb; }
+
+.rivers-table tbody tr.status-low { background-color: #f8d7da; }
+.rivers-table tbody tr.status-low:hover { background-color: #f1c4c8; }
+
+.rivers-table tbody tr.status-high { background-color: #fff3cd; }
+.rivers-table tbody tr.status-high:hover { background-color: #ffeeba; }
+
+.rivers-table tbody tr.status-no-data { background-color: #f8f9fa; }
+.rivers-table tbody tr.status-no-data:hover { background-color: #e9ecef; }
+
+.rivers-table td {
+  padding: 10px 16px;
+  font-size: 0.95em;
+  vertical-align: middle;
+}
+
+.rivers-table th:first-child,
+.rivers-table td.favorite-cell {
+  width: 40px;
+  padding: 0 8px;
+  text-align: center;
+  cursor: default; /* The cell itself isn't clickable */
+}
+
+.river-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.river-level {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.river-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Pushes close button to the right */
+  gap: 8px;
+}
+
+.status-content {
+  /* This wrapper keeps the indicator and text together */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.rivers-table tbody tr.river-row:has(+ tr.expanded-detail-row) {
+  border-bottom: 2px solid #34495e;
+}
+
+.rivers-table tbody tr.expanded-detail-row {
+  background-color: #fdfdfd;
+}
+
+.rivers-table tbody tr.expanded-detail-row:hover {
+  background-color: #fdfdfd; /* No hover effect */
+}
+
+.rivers-table tbody tr.expanded-detail-row td {
+  padding: 0;
+  border-bottom: 2px solid #34495e; /* Matches the open row's bottom border */
+}
+
+/* Expanded River Sections */
+.expanded-river-section {
+  margin-bottom: 0;
+  border: none;
+  background-color: #fff;
+  box-shadow: none;
+  position: relative;
+  padding: 16px; /* Add padding now that the inner header is gone */
+}
+
+/* The close button (X) that appears in the status cell of an expanded row */
+.close-row-btn {
+  font-size: 24px;
+  font-weight: bold;
+  color: #6c757d;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+  display: none; /* Hidden by default, controlled by JS */
+  user-select: none; /* Prevent text selection on click */
+  transition: color 0.2s ease;
+}
+
+.close-row-btn:hover {
+  color: #c0392b; /* A red color for close action */
 }
 
 /* Navigation Bar */
@@ -125,6 +275,20 @@ h2 {
   }
   h1 { font-size: 2em; }
   h2 { font-size: 1.5em; }
+
+  /* Make table responsive */
+  .rivers-table {
+    font-size: 0.85em;
+  }
+
+  .rivers-table th,
+  .rivers-table td {
+    padding: 8px 12px;
+  }
+
+  .expanded-section-header {
+    padding: 6px 12px;
+  }
 }
 
 footer {

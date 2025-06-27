@@ -1,9 +1,10 @@
+<!-- index.html -->
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Rivers - River levels and information" />
+    <meta name="description" content="River level updates" />
     <title>Rivers Project</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="/styles/style.css" />
@@ -35,7 +36,6 @@
           <a href="/about.html">About</a>
         </div>
         <div id="auth-container"></div>
-        <!-- Placeholder for Sign In button -->
       </nav>
     </header>
     <main>
@@ -43,39 +43,40 @@
         <h1>Rivers Project</h1>
         <span class="beta-tag-main">Beta</span>
       </div>
-      <h2>Pacific Northwest</h2>
+      <!-- TODO - make this a dynamic state table row (one of many) -->
+      <h2>Washington</h2>
       <div
         id="sort-controls"
         style="
           margin-bottom: 16px;
-          margin-top: 16px; /* Added to give space from the title container */
+          margin-top: 16px;
           display: flex;
           align-items: center;
           gap: 8px;
         ">
-        <!-- The label is now part of the button text, managed by JavaScript -->
-        <!-- Sort toggle removed as per new requirements -->
       </div>
-      <div id="charts-host"></div>
+
+      <!-- Rivers Table -->
+      <div id="rivers-table-container">
+        <table id="rivers-table" class="rivers-table">
+          <thead>
+            <tr>
+              <th><!-- Favorite Icon Column --></th>
+              <th>River Name</th>
+              <th>Current Level</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="rivers-table-body">
+            <!-- Table rows will be populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Original charts host (hidden by default) -->
+      <div id="charts-host" style="display: none;"></div>
     </main>
     <div id="footer-placeholder"></div>
-
-    <script>
-      // This object will be populated by the entrypoint.sh script in Docker
-      // with values from environment variables (sourced from Google Cloud Secret Manager).
-      // For local development, these will be undefined unless you manually set them
-      // or your dev server has a similar injection mechanism.
-      // Fallbacks to Vite's import.meta.env (VITE_ prefixed) are handled in the respective .ts files.
-      window.runtimeConfig = {
-        FIREBASE_API_KEY: "__FIREBASE_API_KEY__",
-        FIREBASE_AUTH_DOMAIN: "__FIREBASE_AUTH_DOMAIN__",
-        FIREBASE_PROJECT_ID: "__FIREBASE_PROJECT_ID__",
-        FIREBASE_STORAGE_BUCKET: "__FIREBASE_STORAGE_BUCKET__",
-        FIREBASE_MESSAGING_SENDER_ID: "__FIREBASE_MESSAGING_SENDER_ID__",
-        FIREBASE_APP_ID: "__FIREBASE_APP_ID__",
-        API_BASE_URL: "__API_BASE_URL__",
-      };
-    </script>
     <script type="module" src="/src/main.ts"></script>
     <script>
       fetch("/footer.html")

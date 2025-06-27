@@ -1,30 +1,252 @@
 // src/main.ts
-import { getRiverDetails } from './utility/river-service.ts';
-import type { RiverDetail } from './utility/river-service.ts'; // Keep this import
-import { RiverSection } from './components/river-chart/river-section.ts'; // Renamed import
+import { getRiverDetails, getRiverLevelsBySiteCode } from './utility/river-service.ts';
+import type { RiverDetail, RiverLevel } from './utility/river-service.ts';
+import { RiverSection } from './components/river-chart/river-section.ts';
 import { slugify } from './utility/slugify-string.ts';
 import { FavoriteButton } from './components/favorite-button.ts';
-import { AuthUI } from './utility/auth-ui'; // Named import for AuthUI class
+import { AuthUI } from './utility/auth-ui';
 import { authService } from './utility/auth-service';
 import { userPreferencesService } from './utility/user-preferences-service';
 
 console.info("Welcome to the rivers.johnblakey.org. Email me at johnblakeyorg@gmail.com if you find any bugs, security issues, or have feedback. Blunt tone welcome.");
 
 let allRiverDetails: RiverDetail[] = [];
-let chartsContainer: HTMLDivElement | null = null;
+const riverLevelsCache = new Map<string, RiverLevel[]>();
+const expandedSections = new Set<string>();
 
 // Enhanced lazy loading state tracking
-let pendingResortTimeout: number | null = null;
-let hasInitialSortBeenApplied = false; // New flag to ensure hash scroll only happens once
 let isInitialAuthCheckComplete = false;
 
-// Promise to resolve when the initial auth state is confirmed.
-// This is crucial to prevent sorting before we know if the user is logged in,
-// which would cause a race condition with the hash-based scrolling.
+// Promise to resolve when the initial auth state is confirmed
 let resolveInitialAuth: () => void;
 const initialAuthPromise = new Promise<void>(resolve => {
   resolveInitialAuth = resolve;
 });
+
+interface RiverTableData {
+  detail: RiverDetail;
+  currentLevel: number | null;
+  status: 'low' | 'good' | 'high' | 'no-data';
+  statusColor: string;
+}
+
+function determineRiverStatus(currentLevel: number | null, lowAdvised: number, highAdvised: number): { status: 'low' | 'good' | 'high' | 'no-data'; color: string } {
+  if (currentLevel === null) {
+    return { status: 'no-data', color: '#999' };
+  }
+
+  if (lowAdvised === 0 && highAdvised === 0) {
+    return { status: 'no-data', color: '#999' };
+  }
+
+  if (currentLevel < lowAdvised) {
+    return { status: 'low', color: '#dc3545' }; // Red
+  } else if (currentLevel > highAdvised) {
+    return { status: 'high', color: '#ffc107' }; // Yellow/Orange
+  } else {
+    return { status: 'good', color: '#28a745' }; // Green
+  }
+}
+
+async function getCurrentRiverLevel(siteCode: string): Promise<number | null> {
+  if (!siteCode) return null;
+
+  try {
+    // Check cache first
+    let levels = riverLevelsCache.get(siteCode);
+    if (!levels) {
+      levels = await getRiverLevelsBySiteCode(siteCode);
+      riverLevelsCache.set(siteCode, levels);
+    }
+
+    if (levels.length === 0) return null;
+
+    // Get the most recent level
+    const sortedLevels = levels.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return sortedLevels[0].value;
+  } catch (error) {
+    console.error(`Error fetching levels for ${siteCode}:`, error);
+    return null;
+  }
+}
+
+async function createTableData(): Promise<RiverTableData[]> {
+  const tableData: RiverTableData[] = [];
+
+  for (const detail of allRiverDetails) {
+    const currentLevel = await getCurrentRiverLevel(detail.siteCode);
+    const { status, color } = determineRiverStatus(currentLevel, detail.lowAdvisedCFS, detail.highAdvisedCFS);
+
+    tableData.push({
+      detail,
+      currentLevel,
+      status,
+      statusColor: color
+    });
+  }
+
+  return tableData;
+}
+
+async function renderRiversTable() {
+  const tableBody = document.getElementById('rivers-table-body');
+  if (!tableBody) return;
+
+  const tableData = await createTableData();
+
+  // Sort table data (favorites first, then alphabetical)
+  let favoriteSiteCodes: string[] = [];
+  if (authService.isSignedIn()) {
+    try {
+      const preferences = await userPreferencesService.getUserPreferences();
+      favoriteSiteCodes = preferences?.favoriteRivers || [];
+    } catch (error) {
+      console.error('Error fetching favorites for table sorting:', error);
+    }
+  }
+
+  const sortedData = tableData.sort((a, b) => {
+    const aRiverId = a.detail.siteCode || `db-id-${a.detail.id}`;
+    const bRiverId = b.detail.siteCode || `db-id-${b.detail.id}`;
+
+    const aIsFav = favoriteSiteCodes.includes(aRiverId);
+    const bIsFav = favoriteSiteCodes.includes(bRiverId);
+
+    if (aIsFav && !bIsFav) return -1;
+    if (!aIsFav && bIsFav) return 1;
+
+    return a.detail.siteName.toLowerCase().localeCompare(b.detail.siteName.toLowerCase());
+  });
+
+  tableBody.innerHTML = '';
+
+  sortedData.forEach(data => {
+    const row = document.createElement('tr');
+    const riverId = data.detail.siteCode || `db-id-${data.detail.id}`;
+    row.className = 'river-row';
+    row.dataset.riverId = riverId;
+
+    // Add status class for background color styling
+    row.classList.add(`status-${data.status}`);
+
+    // Add favorite class if applicable
+    if (favoriteSiteCodes.includes(riverId)) {
+      row.classList.add('favorite-river');
+    }
+
+    // --- Create Cells ---
+
+    // Favorite Cell
+    const favoriteCell = document.createElement('td');
+    favoriteCell.className = 'favorite-cell';
+    const favoriteButton = document.createElement('favorite-button') as FavoriteButton;
+    favoriteButton.siteCode = riverId;
+    favoriteButton.riverName = data.detail.siteName;
+    favoriteCell.appendChild(favoriteButton);
+    // Prevent the row's click event from firing when the favorite button is clicked
+    favoriteCell.addEventListener('click', (e) => e.stopPropagation());
+    row.appendChild(favoriteCell);
+
+    // River Name, Level, and Status Cells
+    const nameCell = document.createElement('td');
+    nameCell.className = 'river-name';
+    nameCell.textContent = data.detail.siteName;
+    row.appendChild(nameCell);
+
+    const levelCell = document.createElement('td');
+    levelCell.className = 'river-level';
+    levelCell.textContent = data.currentLevel !== null ? `${data.currentLevel.toFixed(0)} CFS` : '';
+    row.appendChild(levelCell);
+
+    const statusCell = document.createElement('td');
+    statusCell.className = 'river-status';
+
+    // Wrapper for status indicator and text to keep them grouped
+    const statusContent = document.createElement('span');
+    statusContent.className = 'status-content';
+    const statusText = data.status === 'no-data' ? 'No Gauge' : data.status.charAt(0).toUpperCase() + data.status.slice(1);
+    statusContent.innerHTML = `<span class="status-indicator" style="background-color: ${data.statusColor}"></span> ${statusText}`;
+    statusCell.appendChild(statusContent);
+
+    // Close button (X) - initially hidden, appears on the far right of the cell
+    const closeButton = document.createElement('span');
+    closeButton.className = 'close-row-btn';
+    closeButton.innerHTML = '&times;'; // Use &times; for a nice X
+    closeButton.style.display = 'none'; // Hide it initially
+    closeButton.title = 'Close section';
+    closeButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent row click from firing
+        toggleRiverSection(data.detail, row);
+    });
+    statusCell.appendChild(closeButton);
+    row.appendChild(statusCell);
+
+    row.addEventListener('click', () => toggleRiverSection(data.detail, row));
+    tableBody.appendChild(row);
+  });
+}
+
+function toggleRiverSection(riverDetail: RiverDetail, clickedRow: HTMLTableRowElement) {
+  const riverId = riverDetail.siteCode || `db-id-${riverDetail.id}`;
+  const slug = slugify(riverDetail.siteName);
+  const sectionId = `expanded-${slug}`;
+  const existingSection = document.getElementById(sectionId);
+
+  // Get the close button from the clicked row to toggle its visibility
+  const closeBtnInRow = clickedRow.querySelector('.close-row-btn') as HTMLElement | null;
+
+  if (existingSection) {
+    // Section is already open, so close it by removing its parent <tr>
+    existingSection.closest('tr')?.remove();
+    expandedSections.delete(riverId);
+
+    // Hide the close button in the row
+    if (closeBtnInRow) {
+      closeBtnInRow.style.display = 'none';
+    }
+
+    if (window.location.hash === `#${slug}`) {
+      history.pushState("", document.title, window.location.pathname + window.location.search);
+    }
+    return;
+  }
+
+  // --- Create new expanded section ---
+  const sectionWrapper = document.createElement('div');
+  sectionWrapper.id = sectionId;
+  sectionWrapper.className = 'expanded-river-section';
+
+  const riverSection = new RiverSection();
+  riverSection.siteCode = riverDetail.siteCode;
+  riverSection.riverId = riverId;
+  riverSection.riverDetail = riverDetail;
+
+  // The header with the close button is removed.
+  // The close button is now part of the main table row and is toggled.
+  sectionWrapper.appendChild(riverSection);
+
+  // Create a new table row and cell to host the section
+  const expandedRow = document.createElement('tr');
+  expandedRow.className = 'expanded-detail-row';
+  const expandedCell = document.createElement('td');
+  expandedCell.colSpan = 4; // Span all columns
+  expandedCell.appendChild(sectionWrapper);
+  expandedRow.appendChild(expandedCell);
+
+  // Insert the new row after the clicked row
+  clickedRow.after(expandedRow);
+  expandedSections.add(riverId);
+
+  // Show the close button in the row
+  if (closeBtnInRow) {
+    closeBtnInRow.style.display = 'block';
+  }
+
+  window.location.hash = slug;
+  setTimeout(() => {
+    expandedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
 
 async function initializeApp() {
   const appHost = document.getElementById('charts-host');
@@ -34,193 +256,68 @@ async function initializeApp() {
     return;
   }
 
-  // Listen for auth state changes immediately.
-  // The first time this fires, it resolves the promise to signal that
-  // the initial user state is known. Subsequent fires will trigger a resort.
+  // Listen for auth state changes
   authService.onAuthStateChanged(() => {
     if (!isInitialAuthCheckComplete) {
       isInitialAuthCheckComplete = true;
       resolveInitialAuth();
     } else {
-      scheduleResort('auth-change');
+      // Re-render table when auth state changes
+      renderRiversTable();
     }
   });
 
   // Setup Auth UI in the header
   const headerAuthContainer = document.getElementById('auth-container');
   if (headerAuthContainer) {
-    const authUI = new AuthUI(); // Instantiate directly using the imported class
+    const authUI = new AuthUI();
     headerAuthContainer.innerHTML = '';
     headerAuthContainer.appendChild(authUI);
   } else {
     console.warn('#auth-container element not found in the header.');
   }
 
-  // Create charts container
-  appHost.innerHTML = '';
-  chartsContainer = document.createElement('div');
-  appHost.appendChild(chartsContainer);
+  // Listen for favorite changes
+  document.addEventListener('favorite-changed', () => {
+    renderRiversTable();
+  });
 
   try {
-    // Listen for favorite changes and chart load completions
-    chartsContainer.addEventListener('favorite-changed', handleFavoriteChange); // Keep favorite change listener
-
-    // Fetch and render charts initially
+    // Fetch river details
     allRiverDetails = await getRiverDetails();
     if (!allRiverDetails?.length) {
-      chartsContainer.textContent = 'No river details found.';
+      const tableContainer = document.getElementById('rivers-table-container');
+      if (tableContainer) {
+        tableContainer.innerHTML = '<p>No river details found.</p>';
+      }
       return;
     }
-    renderCharts(); // Render all charts with initial (unsorted) data
 
-    // Wait for the initial authentication check to complete before sorting.
-    // This ensures that if a user is signed in, we have their favorites
-    // before we attempt to sort and scroll to a hashed URL.
+    // Wait for initial auth check
     await initialAuthPromise;
 
-    applySorting(true); // Now apply the definitive initial sort and handle hash scroll
+    // Render the table
+    await renderRiversTable();
+
+    // Check for a river slug in the URL hash and open its section
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+      const riverDetail = allRiverDetails.find(detail => slugify(detail.siteName) === hash);
+      if (riverDetail) {
+        const riverId = riverDetail.siteCode || `db-id-${riverDetail.id}`;
+        const rowToOpen = document.querySelector(`tr[data-river-id='${riverId}']`) as HTMLTableRowElement | null;
+        if (rowToOpen) {
+          toggleRiverSection(riverDetail, rowToOpen);
+        }
+      }
+    }
+
   } catch (error) {
     console.error("Failed to initialize:", error);
-    chartsContainer.textContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
-  }
-}
-
-function renderCharts() {
-  if (!chartsContainer) return;
-
-  chartsContainer.innerHTML = '';
-
-  for (const detail of allRiverDetails) {
-    // A siteName is the minimum required property to render a chart card.
-    if (!detail.siteName?.trim()) {
-      console.warn(`Skipping river with missing siteName:`, detail);
-      continue;
+    const tableContainer = document.getElementById('rivers-table-container');
+    if (tableContainer) {
+      tableContainer.innerHTML = `<p>Error: ${error instanceof Error ? error.message : String(error)}</p>`;
     }
-
-    // Create a consistent, unique identifier for each river.
-    // Use the siteCode if it exists, otherwise use a prefixed database ID.
-    // This ensures that even rivers without a gauge can be favorited.
-    const riverIdentifier = detail.siteCode || `db-id-${detail.id}`;
-
-    const chartWrapper = document.createElement('div');
-    chartWrapper.className = 'chart-with-favorite-wrapper';
-    chartWrapper.id = `wrapper-${slugify(detail.siteName)}`;
-
-    const chartElement = new RiverSection(); // Instantiate the new component name
-    chartElement.siteCode = detail.siteCode; // These properties are still valid
-    chartElement.riverId = riverIdentifier; // These properties are still valid
-    chartElement.riverDetail = detail; // These properties are still valid
-
-    const favoriteButton = document.createElement('favorite-button') as FavoriteButton;
-    favoriteButton.siteCode = riverIdentifier; // Pass the unique identifier
-    favoriteButton.riverName = detail.siteName;
-
-    chartWrapper.appendChild(favoriteButton);
-    chartWrapper.appendChild(chartElement);
-    chartsContainer.appendChild(chartWrapper);
-  }
-}
-
-/**
- * Schedules a resort operation with debouncing to prevent excessive resorting
- */
-function scheduleResort(reason: string, delay: number = 300) { // Debouncing is still useful for rapid favorite changes
-  if (pendingResortTimeout !== null) {
-    clearTimeout(pendingResortTimeout);
-  }
-
-  pendingResortTimeout = setTimeout(() => {
-    console.log(`Resorting charts (reason: ${reason})`);
-    applySorting(false); // Not an initial sort
-    pendingResortTimeout = null;
-  }, delay);
-}
-
-/**
- * Handles favorite button changes
- */
-function handleFavoriteChange() {
-  scheduleResort('favorite-change');
-}
-
-async function applySorting(isInitial: boolean = false): Promise<void> {
-  if (!chartsContainer) return;
-
-  const chartWrappers = Array.from(chartsContainer.children) as HTMLElement[];
-  const sortedWrappers = await sortChartWrappers(chartWrappers);
-
-  // Only reorder if the order actually changed to prevent unnecessary DOM manipulation
-  const hasOrderChanged = chartWrappers.some((wrapper, index) => wrapper !== sortedWrappers[index]);
-
-  if (hasOrderChanged) {
-    // Re-append in sorted order
-    sortedWrappers.forEach(wrapper => chartsContainer!.appendChild(wrapper));
-
-    // Rebuild charts after DOM reordering
-    rebuildCharts(sortedWrappers);
-  }
-
-  if (isInitial && !hasInitialSortBeenApplied) {
-    handleHashScroll();
-    hasInitialSortBeenApplied = true;
-  }
-}
-
-async function sortChartWrappers(chartWrappers: HTMLElement[]): Promise<HTMLElement[]> {
-  let favoriteSiteCodes: string[] = [];
-  if (authService.isSignedIn()) {
-    try {
-      const preferences = await userPreferencesService.getUserPreferences();
-      favoriteSiteCodes = preferences?.favoriteRivers || [];
-    } catch (error) {
-      console.error('Error fetching favorites for sorting:', error);
-    }
-  }
-
-  const isSiteFavorite = (siteCode: string) => favoriteSiteCodes.includes(siteCode);
-
-  return [...chartWrappers].sort((aWrapper, bWrapper) => {
-    const aChart = aWrapper.querySelector('river-section') as RiverSection; // Update query selector and type
-    const bChart = bWrapper.querySelector('river-section') as RiverSection; // Update query selector and type
-
-    if (!aChart || !bChart) return 0;
-
-    const aIsFav = isSiteFavorite(aChart.riverId);
-    const bIsFav = isSiteFavorite(bChart.riverId);
-
-    // Pinning logic: favorites always come before non-favorites
-    if (aIsFav && !bIsFav) return -1;
-    if (!aIsFav && bIsFav) return 1;
-
-    // If both are favorites or both are non-favorites, sort alphabetically
-    // This is the only secondary sort now
-    return aChart.displayName.toLowerCase().localeCompare(bChart.displayName.toLowerCase());
-  });
-}
-
-function rebuildCharts(chartWrappers: HTMLElement[]): void {
-  setTimeout(() => {
-    chartWrappers.forEach(wrapper => {
-      const chart = wrapper.querySelector('river-section') as RiverSection; // Update query selector and type
-      chart?.rebuildChart();
-    });
-  }, 50);
-}
-
-function handleHashScroll() {
-  const hash = window.location.hash.substring(1);
-  if (!hash || !chartsContainer) return;
-
-  const chartWrappers = Array.from(chartsContainer.children) as HTMLElement[];
-  const targetWrapper = chartWrappers.find(wrapper => {
-    const chart = wrapper.querySelector('river-section') as RiverSection; // Update query selector and type
-    return chart && slugify(chart.displayName) === hash;
-  });
-
-  if (targetWrapper) {
-    setTimeout(() => {
-      targetWrapper.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 150);
   }
 }
 
