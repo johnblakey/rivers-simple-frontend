@@ -126,6 +126,9 @@ async function renderRiversTable() {
     row.className = 'river-row';
     row.dataset.riverId = riverId;
 
+    // Add status class for background color styling
+    row.classList.add(`status-${data.status}`);
+
     // Add favorite class if applicable
     if (favoriteSiteCodes.includes(riverId)) {
       row.classList.add('favorite-river');
@@ -152,7 +155,7 @@ async function renderRiversTable() {
 
     const levelCell = document.createElement('td');
     levelCell.className = 'river-level';
-    levelCell.textContent = data.currentLevel !== null ? `${data.currentLevel.toFixed(1)} CFS` : 'No Data';
+    levelCell.textContent = data.currentLevel !== null ? `${data.currentLevel.toFixed(0)} CFS` : 'No Data';
     row.appendChild(levelCell);
 
     const statusCell = document.createElement('td');

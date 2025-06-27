@@ -94,13 +94,26 @@ h2 {
 }
 
 .rivers-table tbody tr.favorite-river {
-  background-color: #fff3cd;
+  /* background-color is now handled by status classes, e.g. status-high */
   border-left: 4px solid #ffc107;
 }
 
 .rivers-table tbody tr.favorite-river:hover {
-  background-color: #ffeaa7;
+  /* hover background-color is now handled by status classes */
 }
+
+/* Status-based background colors. These will override the generic tr:hover */
+.rivers-table tbody tr.status-good { background-color: #d4edda; }
+.rivers-table tbody tr.status-good:hover { background-color: #c3e6cb; }
+
+.rivers-table tbody tr.status-low { background-color: #f8d7da; }
+.rivers-table tbody tr.status-low:hover { background-color: #f1c4c8; }
+
+.rivers-table tbody tr.status-high { background-color: #fff3cd; }
+.rivers-table tbody tr.status-high:hover { background-color: #ffeeba; }
+
+.rivers-table tbody tr.status-no-data { background-color: #f8f9fa; }
+.rivers-table tbody tr.status-no-data:hover { background-color: #e9ecef; }
 
 .rivers-table td {
   padding: 10px 16px;
