@@ -131,18 +131,31 @@ h2 {
   display: inline-block;
 }
 
-/* Expanded River Sections */
-#expanded-sections {
-  margin-top: 20px;
+.rivers-table tbody tr.river-row:has(+ tr.expanded-detail-row) {
+  border-bottom: 2px solid #34495e;
 }
 
+.rivers-table tbody tr.expanded-detail-row {
+  background-color: #fdfdfd;
+}
+
+.rivers-table tbody tr.expanded-detail-row:hover {
+  background-color: #fdfdfd; /* No hover effect */
+}
+
+.rivers-table tbody tr.expanded-detail-row td {
+  padding: 0;
+  border-bottom: 2px solid #34495e;
+}
+
+/* Expanded River Sections */
 .expanded-river-section {
-  margin-bottom: 20px;
-  border: 2px solid #34495e;
-  border-radius: 8px;
+  margin-bottom: 0;
+  border: none;
   background-color: #fff;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   position: relative;
+  /* border-radius is handled by the header inside */
 }
 
 .expanded-section-header {

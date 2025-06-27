@@ -145,40 +145,39 @@ async function renderRiversTable() {
       </td>
     `;
 
-    row.addEventListener('click', () => toggleRiverSection(data.detail));
+    row.addEventListener('click', () => toggleRiverSection(data.detail, row));
     tableBody.appendChild(row);
   });
 }
 
-function toggleRiverSection(riverDetail: RiverDetail) {
+function toggleRiverSection(riverDetail: RiverDetail, clickedRow: HTMLTableRowElement) {
   const riverId = riverDetail.siteCode || `db-id-${riverDetail.id}`;
   const slug = slugify(riverDetail.siteName);
-  const expandedContainer = document.getElementById('expanded-sections');
-  if (!expandedContainer) return;
-
   const sectionId = `expanded-${slug}`;
   const existingSection = document.getElementById(sectionId);
 
   if (existingSection) {
-    // Section is already expanded, scroll to it and update hash
-    existingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.location.hash = slug;
+    // Section is already open, so close it by removing its parent <tr>
+    existingSection.closest('tr')?.remove();
+    expandedSections.delete(riverId);
+    if (window.location.hash === `#${slug}`) {
+      history.pushState("", document.title, window.location.pathname + window.location.search);
+    }
     return;
   }
 
-  // Create new expanded section
+  // --- Create new expanded section ---
   const sectionWrapper = document.createElement('div');
   sectionWrapper.id = sectionId;
   sectionWrapper.className = 'expanded-river-section';
 
-  // Add close button
   const closeButton = document.createElement('button');
   closeButton.className = 'close-section-btn';
   closeButton.innerHTML = '×';
   closeButton.title = 'Close section';
   closeButton.addEventListener('click', (e) => {
     e.stopPropagation();
-    sectionWrapper.remove();
+    sectionWrapper.closest('tr')?.remove();
     expandedSections.delete(riverId);
     if (window.location.hash === `#${slug}`) {
       // Removes the hash from the URL without reloading
@@ -186,18 +185,15 @@ function toggleRiverSection(riverDetail: RiverDetail) {
     }
   });
 
-  // Create river section component
   const riverSection = new RiverSection();
   riverSection.siteCode = riverDetail.siteCode;
   riverSection.riverId = riverId;
   riverSection.riverDetail = riverDetail;
 
-  // Create favorite button
   const favoriteButton = document.createElement('favorite-button') as FavoriteButton;
   favoriteButton.siteCode = riverId;
   favoriteButton.riverName = riverDetail.siteName;
 
-  // Assemble the section
   const headerDiv = document.createElement('div');
   headerDiv.className = 'expanded-section-header';
   headerDiv.appendChild(favoriteButton);
@@ -206,13 +202,21 @@ function toggleRiverSection(riverDetail: RiverDetail) {
   sectionWrapper.appendChild(headerDiv);
   sectionWrapper.appendChild(riverSection);
 
-  expandedContainer.appendChild(sectionWrapper);
+  // Create a new table row and cell to host the section
+  const expandedRow = document.createElement('tr');
+  expandedRow.className = 'expanded-detail-row';
+  const expandedCell = document.createElement('td');
+  expandedCell.colSpan = 3; // Span all columns
+  expandedCell.appendChild(sectionWrapper);
+  expandedRow.appendChild(expandedCell);
+
+  // Insert the new row after the clicked row
+  clickedRow.after(expandedRow);
   expandedSections.add(riverId);
 
-  // Set hash and scroll to the new section
   window.location.hash = slug;
   setTimeout(() => {
-    sectionWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    expandedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 100);
 }
 
@@ -272,7 +276,11 @@ async function initializeApp() {
     if (hash) {
       const riverDetail = allRiverDetails.find(detail => slugify(detail.siteName) === hash);
       if (riverDetail) {
-        toggleRiverSection(riverDetail);
+        const riverId = riverDetail.siteCode || `db-id-${riverDetail.id}`;
+        const rowToOpen = document.querySelector(`tr[data-river-id='${riverId}']`) as HTMLTableRowElement | null;
+        if (rowToOpen) {
+          toggleRiverSection(riverDetail, rowToOpen);
+        }
       }
     }
 
