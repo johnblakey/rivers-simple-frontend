@@ -137,10 +137,10 @@ See builds and logging at <https://console.cloud.google.com/cloud-build/builds?r
 
 If passing tests, commit these Readme deployment step updates to the test branch, then create a pull request into main, and merge the test branch into main. Then create a tag.
 
-To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-frontend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.7 > "Describe new features or bugfixes"
+To create the tag, note the last tag using the convention vx.y.z (e.g., v0.1.0 -> v0.1.1) <https://github.com/johnblakey/rivers-simple-frontend/tags> and create the next iteration of the tag of the new tested Docker Image with VS Code > Source Control > ... > Tags > Create Tag > v0.1.8 > "Describe new features or bugfixes"
 
 Push created local tag to GitHub - Manually
-$  git push origin v0.1.7
+$  git push origin v0.1.8
 Note that the tag was pushed to GitHub
 
 Add Docker tag
