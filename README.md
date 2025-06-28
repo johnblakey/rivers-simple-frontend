@@ -74,6 +74,12 @@ $ npm run
 
 Created package.json scripts
 
+### Cookies
+
+I used <https://realfavicongenerator.net/> to generate the favicon based on the full SVG.
+I saved the files in the Rivers Project Google Drive folder. Note - to get the browser
+to show the updated favicon I had to clear the cookies.
+
 ### Run Scripts
 
 $ npm run (name_command)
@@ -363,11 +369,13 @@ Copy new Google Cloud DNS record into Squarespace Domains (from Cloud Run > Mana
 - ~~Fix chart label overlap on mobile~~
 - ~~Make the condensed table view~~
 - ~~Make modified expanded view~~
-- Make email alerts option
 - ~~Add private notes~~
+- ~~Favorite charts pinned to top and save the new arrangement~~
+- Add Class rating of run
+- Add request river option
+- Make browser notification option
 - Allow manually setting timezone (default is use the client to set it)
 - Allow rearranging (arrows? drag them?)
-- ~~Favorite charts pinned to top and save the new arrangement~~
 - Reduce roles on Service accounts by replacing with user created simplified service account <https://console.cloud.google.com/iam-admin/iam?inv=1&invt=AbzeuQ&project=river-level-0> and <https://console.cloud.google.com/iam-admin/serviceaccounts?inv=1&invt=AbzeuQ&project=river-level-0> theres an auto-generated account
 - Can I lock down APIs more?
 - I need to verify how to run local and test vs deploy to Cloud Run and test
